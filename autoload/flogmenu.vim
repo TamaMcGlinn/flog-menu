@@ -8,6 +8,8 @@ fu! flog_menu#get_refs(commit)
     throw g:flog_menu_commit_parse_error
   endif
 
+  " TODO replace rest with this after freturncodelog PR#48 is approved
+  " return flog#parse_ref_name_list(l:commit)
   let l:local_branches = []
   let l:remote_branches = []
   let l:special = []
