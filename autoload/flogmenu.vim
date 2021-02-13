@@ -115,7 +115,7 @@ let g:flog_menu_main_menu = [
                           \ ["&Checkout \t\\co", 'call flog_menu#checkout_menu()'],
                           \ ]
 
-augroup flog_menu
-  autocmd FileType floggraph nno <buffer> <Leader>n :<C-U>call quickui#context#open(g:flog_menu_main_menu, g:opts)<CR>
-augroup END
+fu! flogmenu#open_main_menu() abort
+  call quickui#context#open(g:flog_menu_main_menu, g:opts)
+endfunction
 
