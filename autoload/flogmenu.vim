@@ -109,7 +109,7 @@ fu! flogmenu#checkout_menu() abort
   endif
 endfunction
 
-fu! flogmenu#open_main_menu() abort
+fu! flogmenu#open_main_contextmenu() abort
   let l:flogmenu_main_menu = [
                            \ ["&Checkout \t\\co", 'call flogmenu#checkout_menu()'],
                            \ ]

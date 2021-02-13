@@ -43,7 +43,7 @@ Add bindings to the menu entrypoints to your vimrc. For example:
 ```viml
 " Flog menu bindings
 augroup flogmenu
-  autocmd FileType floggraph nno <buffer> <Leader>n :<C-U>call flogmenu#open_main_menu()<CR>
+  autocmd FileType floggraph nno <buffer> <Leader>n :<C-U>call flogmenu#open_main_contextmenu()<CR>
 augroup END
 ```
 
