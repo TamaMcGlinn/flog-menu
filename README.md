@@ -47,3 +47,9 @@ augroup flogmenu
 augroup END
 ```
 
+It is recommended to also set the quickui border style:
+
+```
+let g:quickui_border_style = 2
+```
+
