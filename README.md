@@ -5,8 +5,10 @@ similar to right-clicking in git GUI's, and a main menu shown atop the window
 when activated.
 
 This plugin is an early work in progress.
-[✅] Help welcome
-[❌] Not production-ready
+
+✔️  Help welcome
+
+❌ Not production-ready
 
 You shouldn't have to remember the keybindings for git operations,
 especially for those you seldom use.
@@ -32,13 +34,13 @@ workflow.
 
 ## Roadmap
 
-[❌] Main menu:
-[❌] configuring remotes
+- ❌ Main menu:
+- ❌ configuring remotes
 
-[✅] Context menu:
-[✅] checkout
-[✅] create branches
-[❌] rebase
+- ✔️  Context menu:
+- ✔️  checkout
+- ✔️  create branches
+- ❌ rebase
 
 ## Installation
 
