@@ -1,5 +1,45 @@
 # Vim Flog Menu
 
+Flogmenu adds a context menu for the selected commit on the log graph,
+similar to right-clicking in git GUI's, and a main menu shown atop the window
+when activated.
+
+This plugin is an early work in progress.
+[✅] Help welcome
+[❌] Not production-ready
+
+You shouldn't have to remember the keybindings for git operations,
+especially for those you seldom use.
+Nor should you sacrifice screen space to controls as in mouse-based GUI's.
+
+Like [tig](https://github.com/jonas/tig), flogmenu shows the git log graph
+fullscreen, and allows you to interact with that. However, where tig and flog
+"leave configuration to the user", flogmenu
+aims to be pre-configured and comprehensive in showing all sensible options.
+
+## Easy to learn, easy to master
+
+Vim flogmenu should be so easy to use, that even a yucky non-vim-user could
+use this as a replacement for commandline git. Flogmenu makes features from
+git plugins such as vim-fugitive and vim-flog easy to find and unnecessary to
+remember, by putting them in chained menus with textual descriptions just like
+in fully fledged git editors like GitExtensions, SourceTree, SmartGit etc.
+
+Each menu is navigable by mouse, and by pressing the bold letter. Since the
+implementation is heavy on publicly accessible functions, you could easily
+add your own direct bindings to the underlying operations and speed up your
+workflow.
+
+## Roadmap
+
+[❌] Main menu:
+[❌] configuring remotes
+
+[✅] Context menu:
+[✅] checkout
+[✅] create branches
+[❌] rebase
+
 ## Installation
 
 You need to install [fugitive](https://github.com/tpope/vim-fugitive),
@@ -38,18 +78,21 @@ Plugin 'TamaMcGlinn/vim-flogmenu'
 
 ## Create bindings
 
-Add bindings to the menu entrypoints to your vimrc. For example:
+Add this to your vimrc to bind `<space>n` to open the contextmenu and
+`<space>m` to open the main menu.
 
 ```viml
+" Set the leader to <space>
+" Custom mappings in normal mode that start with space
+" will not conflict with default vim commands
+let mapleader = " "
+
 " Flog menu bindings
 augroup flogmenu
   autocmd FileType floggraph nno <buffer> <Leader>n :<C-U>call flogmenu#open_main_contextmenu()<CR>
 augroup END
-```
 
-It is recommended to also set the quickui border style:
-
-```
+" Recommended: set the quickui border style
 let g:quickui_border_style = 2
 ```
 
