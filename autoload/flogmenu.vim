@@ -6,8 +6,9 @@ fu! flogmenu#git(command) abort
 endfunction
 
 fu! flogmenu#git_then_update(command) abort
-  call flogmenu#git(a:command)
+  let git_output = flogmenu#git(a:command)
   call flog#populate_graph_buffer()
+  return l:git_output
 endfunction
 
 " Gets the references attached to the commit on the selected line
@@ -171,6 +172,18 @@ fu! flogmenu#checkout_fromcache() abort
     " call flog#populate_graph_buffer()
 endfunction
 
+fu! flogmenu#rebase_fromcache() abort
+  " TODO more options, such as interactive and excluding some commits on the
+  " current branch
+  let l:target = g:flogmenu_selection_info.selected_commit_hash
+  echo flogmenu#git_then_update("rebase " . l:target)
+endfunction
+
+fu! flogmenu#rebase() abort
+  call flogmenu#set_selection_info()
+  call flogmenu#rebase_fromcache()
+endfunction
+
 fu! flogmenu#open_main_contextmenu() abort
   call flogmenu#set_selection_info()
   " Note; all menu items should refer to _fromcache variants,
@@ -178,10 +191,11 @@ fu! flogmenu#open_main_contextmenu() abort
   " this ensures that set_selection_info is called once, even if
   " the user traverses several menu's
   let l:flogmenu_main_menu = [
-                           \ ["&Checkout \t\\co", 'call flogmenu#checkout_fromcache()'],
-                           \ ["&Merge \t\\co", 'call flogmenu#merge_fromcache()'],
-                           \ ["&Reset \t\\co", 'call flogmenu#reset_fromcache()'],
-                           \ ["Create &branch \t\\co", 'call flogmenu#create_branch_menu_fromcache()'],
+                           \ ["&Checkout", 'call flogmenu#checkout_fromcache()'],
+                           \ ["&Merge", 'call flogmenu#merge_fromcache()'],
+                           \ ["Re&set", 'call flogmenu#reset_fromcache()'],
+                           \ ["Create &branch", 'call flogmenu#create_branch_menu_fromcache()'],
+                           \ ["&Rebase", 'call flogmenu#rebase_fromcache()'],
                            \ ]
   call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
 endfunction
