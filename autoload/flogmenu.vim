@@ -1,8 +1,13 @@
 
 fu! flogmenu#git(command) abort
-  let l:cmd = substitute(fugitive#Prepare(a:command), "\'", '', 'g')
+  let l:cmd = "git " . a:command
   let l:out = system(l:cmd)
   return substitute(out, '\c\C\n$', '', '')
+endfunction
+
+fu! flogmenu#git_then_update(command) abort
+  call flogmenu#git(a:command)
+  call flog#populate_graph_buffer()
 endfunction
 
 " Gets the references attached to the commit on the selected line
@@ -149,18 +154,18 @@ fu! flogmenu#checkout_fromcache() abort
   " If there are other local branches, these are the most likely choices
   " so they come first
   for l:local_branch in g:flogmenu_selection_info.other_local_branches
-    call add(l:branch_menu, [l:local_branch, 'call flogmenu#git("checkout " . l:local_branch)'])
+    call add(l:branch_menu, [l:local_branch, 'call flogmenu#git_then_update("checkout ' . l:local_branch . '")'])
   endfor
-  call add(l:branch_menu, ['-create branch', 'call flogmenu#create_branch_menu()'])
-  call add(l:branch_menu, ['-detached HEAD', 'call flogmenu#git("checkout " . g:flogmenu_selection_info.selected_commit_hash)'])
+  call add(l:branch_menu, ['-create branch', 'call flogmenu#create_branch_menu_fromcache()'])
+  call add(l:branch_menu, ['-detached HEAD', 'call flogmenu#git_then_update("checkout " . g:flogmenu_selection_info.selected_commit_hash)'])
   " In addition, offer the choices to create branches for unmatched remote branches
   let l:unmatched_remote_branches = filter(g:flogmenu_selection_info.remote_branches,
-    "index(g:flogmenu_selection_info.local_branches, substitute(v:val, '^[^/]*/', '', '') < 0")
+        \ "index(g:flogmenu_selection_info.local_branches, substitute(v:val, '^[^/]*/', '', '')) < 0")
   for l:unmatched_branch in l:unmatched_remote_branches
     call add(l:branch_menu, [l:unmatched_branch,
-      'call flogmenu#create_given_branch_fromcache("' . l:unmatched_branch . '"')']
+          \ 'call flogmenu#create_given_branch_fromcache("' . l:unmatched_branch . '"')']
   endfor
-  call quickui#context#open(l:branch_menu, g:opts)
+  call quickui#context#open(l:branch_menu, g:flogmenu_opts)
   " TODO generically, using function to replace quickui#context#open; If only one choice, do it immediately
     " call flogmenu#git('checkout ' . g:flogmenu_selection_info.other_local_branches[0])
     " call flog#populate_graph_buffer()
