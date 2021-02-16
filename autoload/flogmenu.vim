@@ -249,3 +249,14 @@ fu! flogmenu#open_main_contextmenu() abort
   endif
 endfunction
 
+fu! flogmenu#open_main_menu() abort
+  call quickui#menu#switch('flogmenu')
+  call quickui#menu#reset()
+  " install a 'File' menu, use [text, command] to represent an item.
+  call quickui#menu#install('&Repo', [
+              \ [ "&Status", 'normal! :G' ],
+              \ [ "&Log", 'execute :Flog -all' ],
+              \ [ "&Fetch", 'execute :Git fetch' ]
+              \ ])
+  call quickui#menu#open()
+endfunction
