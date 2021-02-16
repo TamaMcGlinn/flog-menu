@@ -173,8 +173,6 @@ fu! flogmenu#checkout_fromcache() abort
 endfunction
 
 fu! flogmenu#rebase_fromcache() abort
-  " TODO more options, such as interactive and excluding some commits on the
-  " current branch
   let l:target = g:flogmenu_selection_info.selected_commit_hash
   echo flogmenu#git_then_update("rebase " . l:target)
 endfunction
@@ -184,19 +182,70 @@ fu! flogmenu#rebase() abort
   call flogmenu#rebase_fromcache()
 endfunction
 
+fu! flogmenu#advanced_rebase_fromcache() abort
+  let l:cmd = "rebase "
+  let l:target = g:flogmenu_selection_info.selected_commit_hash
+
+  call inputsave()
+  let l:wants_interactive = input("Interactive? (y)es / (n)o ")
+  call inputrestore()
+  if l:wants_interactive == 'y'
+    let l:cmd .= "--interactive "
+  endif
+
+  " TODO what to do with autosquash? Maybe always pass it?
+
+  call inputsave()
+  let l:wants_exclude = input("Exclude some commit? (y)es / (n)o ")
+  call inputrestore()
+  if l:wants_exclude == 'y'
+    let l:cmd .= '--interactive '
+    echom 'Open the context menu again on the commit you want to exclude to complete rebase.
+          \ To cancel, exclude the final commit on your branch'
+    let g:flogmenu_takeover_context_menu = {'type':    'rebase_exclude',
+                                          \ 'basecmd': l:cmd,
+                                          \ 'target':  l:target }
+  else
+    echo flogmenu#git_then_update(l:cmd . l:target)
+  endif
+endfunction
+
+fu! flogmenu#advanced_rebase() abort
+  call flogmenu#set_selection_info()
+  call flogmenu#advanced_rebase_fromcache()
+endfunction
+
+fu! flogmenu#rebase_exclude_fromcache() abort
+  let l:basecmd = g:flogmenu_takeover_context_menu.basecmd
+  let l:target = g:flogmenu_takeover_context_menu.target
+  let l:exclude = g:flogmenu_selection_info.selected_commit_hash
+  let l:cmd = l:basecmd . '--onto ' . l:target . ' ' . l:exclude
+  " Do rebase through fugitive
+  execute "Git " . l:cmd
+  call flog#populate_graph_buffer()
+endfunction
+
 fu! flogmenu#open_main_contextmenu() abort
   call flogmenu#set_selection_info()
-  " Note; all menu items should refer to _fromcache variants,
-  " whereas all direct bindings refer to the regular variant
-  " this ensures that set_selection_info is called once, even if
-  " the user traverses several menu's
-  let l:flogmenu_main_menu = [
-                           \ ["&Checkout", 'call flogmenu#checkout_fromcache()'],
-                           \ ["&Merge", 'call flogmenu#merge_fromcache()'],
-                           \ ["Re&set", 'call flogmenu#reset_fromcache()'],
-                           \ ["Create &branch", 'call flogmenu#create_branch_menu_fromcache()'],
-                           \ ["&Rebase", 'call flogmenu#rebase_fromcache()'],
-                           \ ]
-  call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
+  if type(g:flogmenu_takeover_context_menu) ==# v:t_dict
+    if g:flogmenu_takeover_context_menu.type ==# 'rebase_exclude'
+      call flogmenu#rebase_exclude_fromcache()
+    endif
+    let g:flogmenu_takeover_context_menu = v:null
+  else
+    " Note; all menu items should refer to _fromcache variants,
+    " whereas all direct bindings refer to the regular variant
+    " this ensures that set_selection_info is called once, even if
+    " the user traverses several menu's
+    let l:flogmenu_main_menu = [
+                             \ ["&Checkout", 'call flogmenu#checkout_fromcache()'],
+                             \ ["&Merge", 'call flogmenu#merge_fromcache()'],
+                             \ ["Re&set", 'call flogmenu#reset_fromcache()'],
+                             \ ["Create &branch", 'call flogmenu#create_branch_menu_fromcache()'],
+                             \ ["&Rebase", 'call flogmenu#rebase_fromcache()'],
+                             \ ["&Advanced rebase", 'call flogmenu#advanced_rebase_fromcache()'],
+                             \ ]
+    call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
+  endif
 endfunction
 
