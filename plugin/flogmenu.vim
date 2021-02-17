@@ -8,3 +8,5 @@ let g:flogmenu_opts = {'index':g:quickui#context#cursor}
 " Global variables
 
 let g:flogmenu_selection_info = {}
+
+let g:flogmenu_takeover_context_menu = v:null
