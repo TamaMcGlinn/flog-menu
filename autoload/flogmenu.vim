@@ -202,23 +202,15 @@ fu! flogmenu#rebase_exclude_fromcache() abort
 endfunction
 
 fu! flogmenu#reset_hard() abort
-  call flogmenu#set_selection_info()
-  call flogmenu#reset_hard_fromcache()
-endfunction
-
-fu! flogmenu#reset_hard_fromcache() abort
-  let l:target = g:flogmenu_selection_info.selected_commit_hash
   call flog#run_command("Git reset --hard %h", 0, 1)
 endfunction
 
 fu! flogmenu#reset_mixed() abort
-  call flogmenu#set_selection_info()
-  call flogmenu#reset_mixed_fromcache()
+  call flog#run_command("Git reset --mixed %h", 0, 1)
 endfunction
 
-fu! flogmenu#reset_mixed_fromcache() abort
-  let l:target = g:flogmenu_selection_info.selected_commit_hash
-  call flog#run_command("Git reset --mixed %h", 0, 1)
+fu! flogmenu#cherrypick() abort
+  call flog#run_command("Git cherry-pick %h", 0, 1)
 endfunction
 
 fu! flogmenu#open_main_contextmenu() abort
@@ -236,8 +228,9 @@ fu! flogmenu#open_main_contextmenu() abort
     let l:flogmenu_main_menu = [
                              \ ["&Checkout", 'call flogmenu#checkout_fromcache()'],
                              \ ["&Merge", 'call flogmenu#merge_fromcache()'],
-                             \ ["Reset --&mixed", 'call flogmenu#reset_mixed_fromcache()'],
-                             \ ["Reset --&hard", 'call flogmenu#reset_hard_fromcache()'],
+                             \ ["Reset --&mixed", 'call flogmenu#reset_mixed()'],
+                             \ ["Reset --&hard", 'call flogmenu#reset_hard()'],
+                             \ ["Cherry&pick", 'call flogmenu#cherrypick()'],
                              \ ["Create &branch", 'call flogmenu#create_branch_menu_fromcache()'],
                              \ ["&Rebase", 'call flogmenu#rebase_fromcache()'],
                              \ ["Rebase e&xcluding", 'call flogmenu#excluding_rebase_fromcache()'],
