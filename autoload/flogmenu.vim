@@ -174,7 +174,7 @@ endfunction
 
 fu! flogmenu#rebase_fromcache() abort
   let l:target = g:flogmenu_selection_info.selected_commit_hash
-  echo flogmenu#git_then_update("rebase " . l:target)
+  execute 'Git rebase ' . l:target . ' --interactive --autosquash'
 endfunction
 
 fu! flogmenu#rebase() abort
@@ -182,47 +182,43 @@ fu! flogmenu#rebase() abort
   call flogmenu#rebase_fromcache()
 endfunction
 
-fu! flogmenu#advanced_rebase_fromcache() abort
-  let l:cmd = "rebase "
+fu! flogmenu#excluding_rebase_fromcache() abort
   let l:target = g:flogmenu_selection_info.selected_commit_hash
-
-  call inputsave()
-  let l:wants_interactive = input("Interactive? (y)es / (n)o ")
-  call inputrestore()
-  if l:wants_interactive == 'y'
-    let l:cmd .= "--interactive "
-  endif
-
-  " TODO what to do with autosquash? Maybe always pass it?
-
-  call inputsave()
-  let l:wants_exclude = input("Exclude some commit? (y)es / (n)o ")
-  call inputrestore()
-  if l:wants_exclude == 'y'
-    let l:cmd .= '--interactive '
-    echom 'Open the context menu again on the commit you want to exclude to complete rebase.
-          \ To cancel, exclude the final commit on your branch'
-    let g:flogmenu_takeover_context_menu = {'type':    'rebase_exclude',
-                                          \ 'basecmd': l:cmd,
-                                          \ 'target':  l:target }
-  else
-    echo flogmenu#git_then_update(l:cmd . l:target)
-  endif
+  echom '\nTo conclude, open the context menu again on the commit you want to exclude.\n' .
+        'To cancel, exclude the final commit on your branch.'
+  let g:flogmenu_takeover_context_menu = {'type':    'rebase_exclude',
+                                        \ 'target':  l:target }
 endfunction
 
-fu! flogmenu#advanced_rebase() abort
+fu! flogmenu#excluding_rebase() abort
   call flogmenu#set_selection_info()
-  call flogmenu#advanced_rebase_fromcache()
+  call flogmenu#excluding_rebase_fromcache()
 endfunction
 
 fu! flogmenu#rebase_exclude_fromcache() abort
-  let l:basecmd = g:flogmenu_takeover_context_menu.basecmd
   let l:target = g:flogmenu_takeover_context_menu.target
   let l:exclude = g:flogmenu_selection_info.selected_commit_hash
-  let l:cmd = l:basecmd . '--onto ' . l:target . ' ' . l:exclude
-  " Do rebase through fugitive
-  execute "Git " . l:cmd
-  call flog#populate_graph_buffer()
+  execute "Git rebase --interactive --autosquash --onto " . l:target . ' ' . l:exclude
+endfunction
+
+fu! flogmenu#reset_hard() abort
+  call flogmenu#set_selection_info()
+  call flogmenu#reset_hard_fromcache()
+endfunction
+
+fu! flogmenu#reset_hard_fromcache() abort
+  let l:target = g:flogmenu_selection_info.selected_commit_hash
+  call flog#run_command("Git reset --hard %h", 0, 1)
+endfunction
+
+fu! flogmenu#reset_mixed() abort
+  call flogmenu#set_selection_info()
+  call flogmenu#reset_mixed_fromcache()
+endfunction
+
+fu! flogmenu#reset_mixed_fromcache() abort
+  let l:target = g:flogmenu_selection_info.selected_commit_hash
+  call flog#run_command("Git reset --mixed %h", 0, 1)
 endfunction
 
 fu! flogmenu#open_main_contextmenu() abort
@@ -240,10 +236,11 @@ fu! flogmenu#open_main_contextmenu() abort
     let l:flogmenu_main_menu = [
                              \ ["&Checkout", 'call flogmenu#checkout_fromcache()'],
                              \ ["&Merge", 'call flogmenu#merge_fromcache()'],
-                             \ ["Re&set", 'call flogmenu#reset_fromcache()'],
+                             \ ["Reset --&mixed", 'call flogmenu#reset_mixed_fromcache()'],
+                             \ ["Reset --&hard", 'call flogmenu#reset_hard_fromcache()'],
                              \ ["Create &branch", 'call flogmenu#create_branch_menu_fromcache()'],
                              \ ["&Rebase", 'call flogmenu#rebase_fromcache()'],
-                             \ ["&Advanced rebase", 'call flogmenu#advanced_rebase_fromcache()'],
+                             \ ["Rebase e&xcluding", 'call flogmenu#excluding_rebase_fromcache()'],
                              \ ]
     call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
   endif
