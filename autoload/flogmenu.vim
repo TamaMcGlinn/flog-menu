@@ -212,6 +212,25 @@ fu! flogmenu#cherrypick() abort
   call flog#run_command("Git cherry-pick %h", 0, 1)
 endfunction
 
+fu! flogmenu#merge_fromcache() abort
+  " check the git status is clean
+  if flogmenu#handle_unstaged_changes() == 1
+    return
+  endif
+  let l:merge_choices = []
+  for l:local_branch in g:flogmenu_selection_info.other_local_branches + g:flogmenu_selection_info.unmatched_remote_branches
+    call add(l:merge_choices, [l:local_branch, 'call flog#run_command("Git merge ' . l:local_branch . '", 0, 1)'])
+  endfor
+  if len(l:merge_choices) == 1
+    execute l:merge_choices[0][1]
+  else
+    call quickui#context#open(l:merge_choices, g:flogmenu_opts)
+  endif
+endfunction
+
+fu! flogmenu#delete_branch_fromcache() abort
+endfunction
+
 fu! flogmenu#open_main_contextmenu() abort
   call flogmenu#set_selection_info()
   if type(g:flogmenu_takeover_context_menu) ==# v:t_dict
