@@ -43,6 +43,8 @@ fu! flogmenu#get_refs(commit)
   endif
   " end TODO replacement
 
+  let l:unmatched_remote_branches = filter(l:remote_branches,
+        \ "index(l:local_branches, substitute(v:val, '^[^/]*/', '', '')) < 0")
   let l:current_branch = flogmenu#git('rev-parse --abbrev-ref HEAD')
   let l:other_local_branches = filter(l:local_branches, 'l:current_branch != v:val')
   return {
@@ -50,6 +52,7 @@ fu! flogmenu#get_refs(commit)
      \ 'local_branches': l:local_branches,
      \ 'other_local_branches': l:other_local_branches,
      \ 'remote_branches': l:remote_branches,
+     \ 'unmatched_remote_branches': l:unmatched_remote_branches,
      \ 'tags': l:tags,
      \ 'special': l:special
      \ }
@@ -89,7 +92,7 @@ endfunction
 
 fu! flogmenu#create_given_branch_and_switch_fromcache(branchname) abort
   let l:branch = substitute(a:branchname, '^[^/]*/', '', '')
-  call flogmenu#git_then_update('checkout -b ' . l:branch . ' ' . g:flogmenu_selection_info.selected_commit_hash)
+  call flogmenu#git_then_update('checkout -B ' . l:branch . ' ' . g:flogmenu_selection_info.selected_commit_hash)
 endfunction
 
 fu! flogmenu#create_input_branch_fromcache() abort
@@ -101,9 +104,7 @@ endfunction
 
 fu! flogmenu#create_branch_menu_fromcache() abort
   let l:branch_menu = []
-  let l:unmatched_remote_branches = filter(g:flogmenu_selection_info.remote_branches,
-    "index(g:flogmenu_selection_info.local_branches, substitute(v:val, '^[^/]*/', '', '') < 0")
-  for l:unmatched_branch in l:unmatched_remote_branches
+  for l:unmatched_branch in g:flogmenu_selection_info.unmatched_remote_branches
     call add(l:branch_menu, [l:unmatched_branch,
       'call flogmenu#create_given_branch_fromcache("' . l:unmatched_branch . '"')']
   endfor
@@ -156,9 +157,7 @@ fu! flogmenu#checkout_fromcache() abort
     call add(l:branch_menu, [l:local_branch, 'call flogmenu#git_then_update("checkout ' . l:local_branch . '")'])
   endfor
   " Next, offer the choices to create branches for unmatched remote branches
-  let l:unmatched_remote_branches = filter(g:flogmenu_selection_info.remote_branches,
-        \ "index(g:flogmenu_selection_info.local_branches, substitute(v:val, '^[^/]*/', '', '')) < 0")
-  for l:unmatched_branch in l:unmatched_remote_branches
+  for l:unmatched_branch in g:flogmenu_selection_info.unmatched_remote_branches
     call add(l:branch_menu, [l:unmatched_branch,
           \ 'call flogmenu#create_given_branch_and_switch_fromcache("' . l:unmatched_branch . '")'])
   endfor
@@ -166,9 +165,6 @@ fu! flogmenu#checkout_fromcache() abort
   call add(l:branch_menu, ['-create branch', 'call flogmenu#create_branch_menu_fromcache()'])
   call add(l:branch_menu, ['-detached HEAD', 'call flogmenu#git_then_update("checkout " . g:flogmenu_selection_info.selected_commit_hash)'])
   call quickui#context#open(l:branch_menu, g:flogmenu_opts)
-  " TODO generically, using function to replace quickui#context#open; If only one choice, do it immediately
-    " call flogmenu#git('checkout ' . g:flogmenu_selection_info.other_local_branches[0])
-    " call flog#populate_graph_buffer()
 endfunction
 
 fu! flogmenu#rebase_fromcache() abort
