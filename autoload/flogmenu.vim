@@ -76,22 +76,20 @@ fu! flogmenu#create_branch_menu() abort
 endfunction
 
 fu! flogmenu#create_given_branch_fromcache(branchname) abort
-  " TODO
-  " if the branch begins with a remote name, check if the local branch has
-  " changes not on the remote, and if so, if we want to reset the branch and
-  " leave those changes behind (possibly unreachable)
-  " also, remove the remote name to make a local branch
-
-  " Ask if the user wants to also switch to that branch
   call inputsave()
-  let l:wants_to_switch = input("Switch to the branch? (y)es / (n)o ") " TODO / (a)lways / ne(v)er
+  let l:wants_to_switch = input("Switch to the branch? (y)es / (n)o ")
   call inputrestore()
 
   if l:wants_to_switch == 'y'
-    call flogmenu#git('checkout -b ' . a:branchname)
+    call flogmenu#create_given_branch_and_switch_fromcache(a:branchname)
   else
-    call flogmenu#git('branch ' . a:branchname . ' ' . g:flogmenu_selection_info.selected_commit_hash)
+    call flogmenu#git_then_update('branch ' . a:branchname . ' ' . g:flogmenu_selection_info.selected_commit_hash)
   endif
+endfunction
+
+fu! flogmenu#create_given_branch_and_switch_fromcache(branchname) abort
+  let l:branch = substitute(a:branchname, '^[^/]*/', '', '')
+  call flogmenu#git_then_update('checkout -b ' . l:branch . ' ' . g:flogmenu_selection_info.selected_commit_hash)
 endfunction
 
 fu! flogmenu#create_input_branch_fromcache() abort
@@ -157,15 +155,16 @@ fu! flogmenu#checkout_fromcache() abort
   for l:local_branch in g:flogmenu_selection_info.other_local_branches
     call add(l:branch_menu, [l:local_branch, 'call flogmenu#git_then_update("checkout ' . l:local_branch . '")'])
   endfor
-  call add(l:branch_menu, ['-create branch', 'call flogmenu#create_branch_menu_fromcache()'])
-  call add(l:branch_menu, ['-detached HEAD', 'call flogmenu#git_then_update("checkout " . g:flogmenu_selection_info.selected_commit_hash)'])
-  " In addition, offer the choices to create branches for unmatched remote branches
+  " Next, offer the choices to create branches for unmatched remote branches
   let l:unmatched_remote_branches = filter(g:flogmenu_selection_info.remote_branches,
         \ "index(g:flogmenu_selection_info.local_branches, substitute(v:val, '^[^/]*/', '', '')) < 0")
   for l:unmatched_branch in l:unmatched_remote_branches
     call add(l:branch_menu, [l:unmatched_branch,
-          \ 'call flogmenu#create_given_branch_fromcache("' . l:unmatched_branch . '"')']
+          \ 'call flogmenu#create_given_branch_and_switch_fromcache("' . l:unmatched_branch . '")'])
   endfor
+  " Finally, choices to make new branch or none at all
+  call add(l:branch_menu, ['-create branch', 'call flogmenu#create_branch_menu_fromcache()'])
+  call add(l:branch_menu, ['-detached HEAD', 'call flogmenu#git_then_update("checkout " . g:flogmenu_selection_info.selected_commit_hash)'])
   call quickui#context#open(l:branch_menu, g:flogmenu_opts)
   " TODO generically, using function to replace quickui#context#open; If only one choice, do it immediately
     " call flogmenu#git('checkout ' . g:flogmenu_selection_info.other_local_branches[0])
