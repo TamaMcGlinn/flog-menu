@@ -1,6 +1,6 @@
 
 fu! flogmenu#git(command) abort
-  let l:cmd = "git " . a:command
+  let l:cmd = 'git ' . a:command
   let l:out = system(l:cmd)
   return substitute(out, '\c\C\n$', '', '')
 endfunction
@@ -12,7 +12,7 @@ fu! flogmenu#git_then_update(command) abort
 endfunction
 
 " Gets the references attached to the commit on the selected line
-fu! flogmenu#get_refs(commit)
+fu! flogmenu#get_refs(commit) abort
   if type(a:commit) != v:t_dict
     throw g:flogmenu_commit_parse_error
   endif
@@ -80,10 +80,10 @@ endfunction
 
 fu! flogmenu#create_given_branch_fromcache(branchname) abort
   call inputsave()
-  let l:wants_to_switch = input("Switch to the branch? (y)es / (n)o ")
+  let l:wants_to_switch = input('Switch to the branch? (y)es / (n)o ')
   call inputrestore()
 
-  if l:wants_to_switch == 'y'
+  if l:wants_to_switch ==# 'y'
     call flogmenu#create_given_branch_and_switch_fromcache(a:branchname)
   else
     call flogmenu#git_then_update('branch ' . a:branchname . ' ' . g:flogmenu_selection_info.selected_commit_hash)
@@ -97,7 +97,7 @@ endfunction
 
 fu! flogmenu#create_input_branch_fromcache() abort
   call inputsave()
-  let l:branchname = input("Branch: ")
+  let l:branchname = input('Branch: ')
   call inputrestore()
   call create_given_branch_fromcache(l:branchname)
 endfunction
@@ -106,7 +106,7 @@ fu! flogmenu#create_branch_menu_fromcache() abort
   let l:branch_menu = []
   for l:unmatched_branch in g:flogmenu_selection_info.unmatched_remote_branches
     call add(l:branch_menu, [l:unmatched_branch,
-      'call flogmenu#create_given_branch_fromcache("' . l:unmatched_branch . '"')']
+          \ 'call flogmenu#create_given_branch_fromcache("' . l:unmatched_branch . '")'])
   endfor
   call add(l:branch_menu, ['-custom', 'call flogmenu#create_input_branch_fromcache()'])
   call quickui#context#open(l:branch_menu, g:flogmenu_opts)
@@ -127,9 +127,9 @@ fu! flogmenu#handle_unstaged_changes() abort
     let l:unstaged_info = flogmenu#git('diff --stat')
     let l:choice = input("Unstaged changes: \n" . l:unstaged_info . "\n> (a)bort / (d)iscard / (s)tash ")
     call inputrestore()
-    if l:choice == 'd'
+    if l:choice ==# 'd'
       call system('git checkout -- .') " TODO this doesn't work - need to throw away unstaged changes
-    elseif l:choice == 's'
+    elseif l:choice ==# 's'
       call flogmenu#git('stash')
     else " All invalid input also means abort
       return 1
@@ -180,7 +180,7 @@ endfunction
 fu! flogmenu#excluding_rebase_fromcache() abort
   let l:target = g:flogmenu_selection_info.selected_commit_hash
   echom '\nTo conclude, open the context menu again on the commit you want to exclude.\n' .
-        'To cancel, exclude the final commit on your branch.'
+      \ 'To cancel, exclude the final commit on your branch.'
   let g:flogmenu_takeover_context_menu = {'type':    'rebase_exclude',
                                         \ 'target':  l:target }
 endfunction
@@ -193,19 +193,19 @@ endfunction
 fu! flogmenu#rebase_exclude_fromcache() abort
   let l:target = g:flogmenu_takeover_context_menu.target
   let l:exclude = g:flogmenu_selection_info.selected_commit_hash
-  execute "Git rebase --interactive --autosquash --onto " . l:target . ' ' . l:exclude
+  execute 'Git rebase --interactive --autosquash --onto ' . l:target . ' ' . l:exclude
 endfunction
 
 fu! flogmenu#reset_hard() abort
-  call flog#run_command("Git reset --hard %h", 0, 1)
+  call flog#run_command('Git reset --hard %h', 0, 1)
 endfunction
 
 fu! flogmenu#reset_mixed() abort
-  call flog#run_command("Git reset --mixed %h", 0, 1)
+  call flog#run_command('Git reset --mixed %h', 0, 1)
 endfunction
 
 fu! flogmenu#cherrypick() abort
-  call flog#run_command("Git cherry-pick %h", 0, 1)
+  call flog#run_command('Git cherry-pick %h', 0, 1)
 endfunction
 
 fu! flogmenu#merge_fromcache() abort
@@ -240,14 +240,14 @@ fu! flogmenu#open_main_contextmenu() abort
     " this ensures that set_selection_info is called once, even if
     " the user traverses several menu's
     let l:flogmenu_main_menu = [
-                             \ ["&Checkout", 'call flogmenu#checkout_fromcache()'],
-                             \ ["&Merge", 'call flogmenu#merge_fromcache()'],
-                             \ ["Reset --&mixed", 'call flogmenu#reset_mixed()'],
-                             \ ["Reset --&hard", 'call flogmenu#reset_hard()'],
-                             \ ["Cherry&pick", 'call flogmenu#cherrypick()'],
-                             \ ["Create &branch", 'call flogmenu#create_branch_menu_fromcache()'],
-                             \ ["&Rebase", 'call flogmenu#rebase_fromcache()'],
-                             \ ["Rebase e&xcluding", 'call flogmenu#excluding_rebase_fromcache()'],
+                             \ ['&Checkout', 'call flogmenu#checkout_fromcache()'],
+                             \ ['&Merge', 'call flogmenu#merge_fromcache()'],
+                             \ ['Reset --&mixed', 'call flogmenu#reset_mixed()'],
+                             \ ['Reset --&hard', 'call flogmenu#reset_hard()'],
+                             \ ['Cherry&pick', 'call flogmenu#cherrypick()'],
+                             \ ['Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
+                             \ ['&Rebase', 'call flogmenu#rebase_fromcache()'],
+                             \ ['Rebase e&xcluding', 'call flogmenu#excluding_rebase_fromcache()'],
                              \ ]
     call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
   endif
@@ -258,9 +258,9 @@ fu! flogmenu#open_main_menu() abort
   call quickui#menu#reset()
   " install a 'File' menu, use [text, command] to represent an item.
   call quickui#menu#install('&Repo', [
-              \ [ "&Status", 'normal! :G' ],
-              \ [ "&Log", 'execute :Flog -all' ],
-              \ [ "&Fetch", 'execute :Git fetch' ]
+              \ [ '&Status', 'normal! :G' ],
+              \ [ '&Log', 'execute :Flog -all' ],
+              \ [ '&Fetch', 'execute :Git fetch' ]
               \ ])
   call quickui#menu#open()
 endfunction
