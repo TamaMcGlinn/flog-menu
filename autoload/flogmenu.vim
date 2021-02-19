@@ -253,14 +253,22 @@ fu! flogmenu#open_main_contextmenu() abort
   endif
 endfunction
 
+fu! flogmenu#open_git_log() abort
+  execute ':Flog -all'
+  execute ':Flogjump HEAD'
+  execute 'normal! zz'
+endfunction
+
 fu! flogmenu#open_main_menu() abort
   call quickui#menu#switch('flogmenu')
   call quickui#menu#reset()
   " install a 'File' menu, use [text, command] to represent an item.
   call quickui#menu#install('&Repo', [
-              \ [ '&Status', 'normal! :G' ],
-              \ [ '&Log', 'execute :Flog -all' ],
-              \ [ '&Fetch', 'execute :Git fetch' ]
+              \ [ '&Status', 'execute ":Gstatus"' ],
+              \ [ 'L&og', 'call flogmenu#open_git_log()' ],
+              \ [ '&Fetch', 'call flog#run_command("Git fetch --all", 0, 1)' ],
+              \ [ '&Pull', 'call flog#run_command("Git pull", 0, 1)' ]
               \ ])
   call quickui#menu#open()
 endfunction
+
