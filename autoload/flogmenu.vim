@@ -99,7 +99,7 @@ fu! flogmenu#create_input_branch_fromcache() abort
   call inputsave()
   let l:branchname = input('Branch: ')
   call inputrestore()
-  call create_given_branch_fromcache(l:branchname)
+  call flogmenu#create_given_branch_fromcache(l:branchname)
 endfunction
 
 fu! flogmenu#create_branch_menu_fromcache() abort
