@@ -90,9 +90,27 @@ fu! flogmenu#create_given_branch_fromcache(branchname) abort
   endif
 endfunction
 
+fu! flogmenu#is_remote(remotename) abort
+  call flogmenu#git('remote -v | (while read line; do echo $line | { read first rest; echo $first; }; done) | grep "^' . a:remotename . '$"')
+  return v:shell_error == 0
+endfunction
+
 fu! flogmenu#create_given_branch_and_switch_fromcache(branchname) abort
-  let l:branch = substitute(a:branchname, '^[^/]*/', '', '')
+  let l:branch = a:branchname
+  let l:track_remote = 0
+  if a:branchname =~# '.*/.*'
+    let l:remote = substitute(a:branchname, '/.*', '', '')
+    if flogmenu#is_remote(l:remote)
+      let l:track_remote = 1
+      let l:branch = substitute(a:branchname, '^[^/]*/', '', '')
+    endif
+  else
+  endif
   call flogmenu#git_then_update('checkout -B ' . l:branch . ' ' . g:flogmenu_selection_info.selected_commit_hash)
+  if l:track_remote
+    let l:command = 'branch --set-upstream ' . l:branch . ' ' . l:remote . '/' . l:branch
+    call flogmenu#git(l:command)
+  endif
 endfunction
 
 fu! flogmenu#create_input_branch_fromcache() abort
@@ -208,6 +226,10 @@ fu! flogmenu#cherrypick() abort
   call flog#run_command('Git cherry-pick %h', 0, 1)
 endfunction
 
+fu! flogmenu#revert() abort
+  call flog#run_command('Git revert %h', 0, 1)
+endfunction
+
 fu! flogmenu#merge_fromcache() abort
   " check the git status is clean
   if flogmenu#handle_unstaged_changes() == 1
@@ -225,6 +247,16 @@ fu! flogmenu#merge_fromcache() abort
 endfunction
 
 fu! flogmenu#delete_branch_fromcache() abort
+endfunction
+
+fu! flogmenu#fixup_fromcache() abort
+  " TODO if no staged changes, ask whether to stage all
+
+endfunction
+
+fu! flogmenu#fixup() abort
+  call flogmenu#set_selection_info()
+  call flogmenu#fixup_fromcache()
 endfunction
 
 fu! flogmenu#open_main_contextmenu() abort
@@ -245,9 +277,10 @@ fu! flogmenu#open_main_contextmenu() abort
                              \ ['Reset --mi&xed', 'call flogmenu#reset_mixed()'],
                              \ ['Reset --&hard', 'call flogmenu#reset_hard()'],
                              \ ['Cherry&pick', 'call flogmenu#cherrypick()'],
+                             \ ['Re&vert', 'call flogmenu#revert()'],
                              \ ['Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
                              \ ['&Rebase', 'call flogmenu#rebase_fromcache()'],
-                             \ ['Rebase e&xcluding', 'call flogmenu#excluding_rebase_fromcache()'],
+                             \ ['&Fixup', 'call flogmenu#fixup_fromcache()'],
                              \ ]
     call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
   endif
