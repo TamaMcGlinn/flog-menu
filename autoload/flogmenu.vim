@@ -281,6 +281,7 @@ fu! flogmenu#open_main_contextmenu() abort
                              \ ['Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
                              \ ['&Rebase', 'call flogmenu#rebase_fromcache()'],
                              \ ['&Fixup', 'call flogmenu#fixup_fromcache()'],
+                             \ ['Si&gnifyThis', 'call flogmenu#signify_this()'],
                              \ ]
     call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
   endif
@@ -296,5 +297,15 @@ fu! flogmenu#open_all_windows() abort
   call flogmenu#open_git_log()
   execute ':Twiggy'
   execute ':Gstatus'
+endfunction
+
+" Signify other commits:
+fu! flogmenu#set_signify_target(target_commit) abort
+  let g:signify_vcs_cmds['git'] = 'git diff --no-color --no-ext-diff -U0 ' . a:target_commit . ' -- %f'
+  echom 'Now diffing against ' . a:target_commit
+endfunction
+
+fu! flogmenu#signify_this() abort
+  call flogmenu#set_signify_target(g:flogmenu_selection_info['selected_commit_hash'])
 endfunction
 
