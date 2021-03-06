@@ -48,13 +48,13 @@ you could submit a merge request.
 
 ## Roadmap
 
-- ✔️ Main menu:
+Main menu:
 - ✔️  push / pull
 - ❌ configuring remotes
 - ✔️  branch menu
 - ✔️  search branches / tags
 
-- ✔️ Context menu:
+Context menu:
 - ✔️  checkout
 - ✔️  create branches
 - ✔️  revert
