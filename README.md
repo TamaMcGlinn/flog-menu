@@ -73,6 +73,7 @@ You need to install:
 - [twiggy](https://github.com/sodapopcan/vim-twiggy)
 - [fzf-checkout](https://github.com/stsewd/fzf-checkout.vim)
 - [leader-mapper](https://github.com/dpretet/vim-leader-mapper) (optional)
+- [quickui](https://github.com/skywind3000/vim-quickui)
 - [flogmenu](https://github.com/TamaMcGlinn/vim-flogmenu)
 
 Of course, you are recommended to use a plugin manager, for instance:
@@ -85,6 +86,7 @@ Plug 'rbong/vim-flog'
 Plug 'sodapopcan/vim-twiggy'
 Plug 'stsewd/fzf-checkout.vim'
 Plug 'dpretet/vim-leader-mapper'
+Plug 'skywind3000/vim-quickui'
 Plug 'TamaMcGlinn/vim-flogmenu'
 ```
 
@@ -96,6 +98,7 @@ call dein#add('rbong/vim-flog')
 call dein#add('sodapopcan/vim-twiggy')
 call dein#add('stsewd/fzf-checkout')
 call dein#add('dpretet/vim-leader-mapper')
+call dein#add('skywind3000/vim-quickui')
 call dein#add('TamaMcGlinn/vim-flogmenu')
 ```
 
@@ -107,6 +110,7 @@ Plugin 'rbong/vim-flog'
 Plugin 'sodapopcan/vim-twiggy'
 Plugin 'stsewd/fzf-checkout'
 Plugin 'dpretet/vim-leader-mapper'
+Plugin 'skywind3000/vim-quickui'
 Plugin 'TamaMcGlinn/vim-flogmenu'
 ```
 
