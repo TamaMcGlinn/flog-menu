@@ -190,6 +190,9 @@ let g:leaderMenu = {'name':  'Main menu',
              \}
 ```
 
+Note that the above has to go into `~/.vim/after/plugin/flogmenu_config.vim`
+(for Vim), or `~/.config/nvim/after/plugin/flogmenu_config.vim` (for NeoVim).
+
 #### Option 2: Open git menu directly
 
 If you don't want to use leader-mapper for anything but the git menu, use:
@@ -199,6 +202,9 @@ let g:leaderMenu = g:flogmenu_gitmenu
 ```
 
 Now whatever you mapped to :LeaderMapper will open the flogmenu defined git menu.
+
+Note that the above has to go into `~/.vim/after/plugin/flogmenu_config.vim`
+(for Vim), or `~/.config/nvim/after/plugin/flogmenu_config.vim` (for NeoVim).
 
 #### Option 3: Copy git menu and customize
 
@@ -220,4 +226,7 @@ let g:personal_gitmenu = {'name': 'Git Menu',
 
 let g:leaderMenu = g:personal_gitmenu
 ```
+
+This option is probably best, since it can just go straight in your vimrc file,
+and offers you a stable interface.
 
