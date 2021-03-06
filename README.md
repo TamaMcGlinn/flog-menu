@@ -43,8 +43,8 @@ add your own direct bindings to the underlying operations and speed up your
 workflow, without using the visual menus, if you prefer the traditional
 'remember-your-keybindings' vim approach. Instead of using my context menu,
 you could copy the 10 lines of config that define it, and change them around to
-suit your config. However, if you want to add features for everyone,
-you could submit a merge request.
+suit your config. However, if your change is useful for everyone, I'd prefer you
+submit a merge request.
 
 ## Roadmap
 
@@ -61,6 +61,7 @@ Context menu:
 - ✔️  rebase
 - ✔️  reset mixed / hard
 - ❌ use soft instead of mixed in bare repo's
+- ❌ fixup/amend a commit
 - ❌ create (partial) bundles for sneakernet transfer
 
 ## Installation
@@ -110,18 +111,25 @@ Plugin 'TamaMcGlinn/vim-flogmenu'
 ```
 
 If you need to modify some of these, check the repository out
-somewhere, and add that directory. For example:
+somewhere, and add that directory as a plugin. For example:
 
 ```vim
 Plug '~/code/vimplugins/vim-flogmenu'
 ```
 
-When you modify code in that directory, you will need to
+When you modify such code, you will need to
 `source %` to make the changes take effect.
+
+##### sidenote:
+
+You may notice that the git log looks quite different in the screenshot
+from default vim-flog. When
+[this issue](https://github.com/rbong/vim-flog/issues/49) is resolved,
+instructions will appear below to optionally switch to this behaviour.
 
 ## Optional configuration
 
-### context menu bindings
+### Context menu bindings
 
 Add this to your vimrc to bind `<leader>m` to open the contextmenu:
 
@@ -140,7 +148,7 @@ augroup END
 let g:quickui_border_style = 2
 ```
 
-### open git menu
+### Open git menu
 
 If you just wanted the context menu on the git log, you don't 
 need leader-mapper installed, and you're done installing now.
@@ -156,7 +164,7 @@ nnoremap <silent> <leader> :LeaderMapper<CR>
 
 Now pick one of the options below.
 
-### Sidenote:
+##### sidenote:
 
 If you used something for LeaderMapper as above, that is a prefix
 of any of your existing mappings, there will be surprises. For example, if
@@ -176,10 +184,9 @@ your existing config like this:
 ```vim
 " Define the menu content with a Vim dictionary
 let g:leaderMenu = {'name':  'Main menu',
-             \'n': [g:flogmenu_gitmenu,  'Git'],
-             \'o': [fzfMenu,  'Navigate'],
-             \'b': [exampleMenu,'Etc.'],
-             \'q': [':tabc', 'Example direct command to close tab'],
+             \'g': [g:flogmenu_gitmenu,  'Git'],
+             \'n': [myNavMenu,           'Navigate'],
+             \'q': [':tabc',       'Example direct command to close tab'],
              \}
 ```
 
