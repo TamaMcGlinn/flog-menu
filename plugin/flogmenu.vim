@@ -3,7 +3,7 @@
 let g:flogmenu_commit_parse_error = 'flogmenu: unable to parse commit'
 
 let g:flogmenu_logmenu = {'name': 'Log Menu',
- \'l': [':Flog -all', 'Normal'],
+ \'l': ['call flogmenu#open_git_log()', 'Show git log'],
  \'c': [':Flog', 'Current branch'],
  \'s': [':Flogsplit -all', 'Split'],
  \'v': [':vertical Flogsplit -all', 'Vertical split'],
@@ -18,6 +18,7 @@ let g:flogmenu_logmenu = {'name': 'Log Menu',
  \}
 
 let g:flogmenu_gitmenu = {'name': 'Git Menu',
+             \'a': ['call flogmenu#open_all_windows()', 'All windows'],
              \'s': [':Gstatus', 'Status'],
              \'r': [':Gedit', 'Toggle index / working file version'],
              \'R': [':Gread', 'Reset to index'],

@@ -292,16 +292,9 @@ fu! flogmenu#open_git_log() abort
   execute 'normal! zz'
 endfunction
 
-fu! flogmenu#open_main_menu() abort
-  call quickui#menu#switch('flogmenu')
-  call quickui#menu#reset()
-  " install a 'File' menu, use [text, command] to represent an item.
-  call quickui#menu#install('&Repo', [
-              \ [ '&Status', 'execute ":Gstatus"' ],
-              \ [ 'L&og', 'call flogmenu#open_git_log()' ],
-              \ [ '&Fetch', 'call flog#run_command("Git fetch --all", 0, 1)' ],
-              \ [ '&Pull', 'call flog#run_command("Git pull", 0, 1)' ]
-              \ ])
-  call quickui#menu#open()
+fu! flogmenu#open_all_windows() abort
+  call flogmenu#open_git_log()
+  execute ':Twiggy'
+  execute ':Gstatus'
 endfunction
 
