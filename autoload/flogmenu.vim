@@ -251,12 +251,22 @@ endfunction
 
 fu! flogmenu#fixup_fromcache() abort
   " TODO if no staged changes, ask whether to stage all
-
+  execute 'Git commit --fixup=' . g:flogmenu_selection_info.selected_commit_hash
 endfunction
 
 fu! flogmenu#fixup() abort
   call flogmenu#set_selection_info()
   call flogmenu#fixup_fromcache()
+endfunction
+
+fu! flogmenu#amend_commit_fromcache() abort
+  call flogmenu#fixup_fromcache()
+  execute 'Git rebase --autosquash ' . g:flogmenu_selection_info.selected_commit_hash . '~1'
+endfunction
+
+fu! flogmenu#amend_commit() abort
+  call flogmenu#set_selection_info()
+  call flogmenu#amend_commit_fromcache()
 endfunction
 
 fu! flogmenu#open_main_contextmenu() abort
@@ -281,6 +291,7 @@ fu! flogmenu#open_main_contextmenu() abort
                              \ ['Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
                              \ ['&Rebase', 'call flogmenu#rebase_fromcache()'],
                              \ ['&Fixup', 'call flogmenu#fixup_fromcache()'],
+                             \ ['&Amend', 'call flogmenu#amend_commit_fromcache()'],
                              \ ['Si&gnifyThis', 'call flogmenu#signify_this()'],
                              \ ]
     call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
