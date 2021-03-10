@@ -33,6 +33,7 @@ let g:flogmenu_gitmenu = {'name': 'Git Menu',
              \'c': [':Git commit', 'Commit'],
              \'.': [':Git add .', 'Add CWD'],
              \',': [':Git add %', 'Add file'],
+             \'u': ['call flogmenu#open_unmerged()', 'Open unmerged files'],
              \'d': [':Git add %:h', 'Add file dir'],
              \'l': [g:flogmenu_logmenu, 'Log'],
              \}

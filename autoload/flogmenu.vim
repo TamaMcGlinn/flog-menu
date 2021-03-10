@@ -320,3 +320,10 @@ fu! flogmenu#signify_this() abort
   call flogmenu#set_signify_target(g:flogmenu_selection_info['selected_commit_hash'])
 endfunction
 
+" The following functions have nothing to do with flog
+" they are just general git operations which I want in the git menu
+
+fu! flogmenu#open_unmerged()
+  execute 'args ' . system("git ls-files --unmerged | cut -f2 | sort -u | sed -r 's/ /\\\\ /g' | paste -sd ' ' -")
+endfunction
+
