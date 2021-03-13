@@ -312,7 +312,7 @@ fu! flogmenu#open_main_contextmenu() abort
   let l:flogmenu_main_menu = [
                            \ ['&Checkout', 'call flogmenu#checkout_fromcache()'],
                            \ ['&Merge', 'call flogmenu#merge_fromcache()'],
-                           \ ['Reset --mi&xed', 'call flogmenu#reset_mixed()'],
+                           \ ['Reset &index', 'call flogmenu#reset_mixed()'],
                            \ ['Reset --&hard', 'call flogmenu#reset_hard()'],
                            \ ['Cherry&pick', 'call flogmenu#cherrypick()'],
                            \ ['Re&vert', 'call flogmenu#revert()'],
