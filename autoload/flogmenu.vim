@@ -263,7 +263,7 @@ fu! flogmenu#delete_other_branch_fromcache(branch) abort
   if v:shell_error
     let l:remote_tracking_branch = v:null
   endif
-  call flogmenu#git('branch -D ' . a:branch)
+  call flogmenu#git('branch -D "' . a:branch . '"')
   if l:remote_tracking_branch != v:null
     call inputsave()
     let l:delete_remote = input('Delete remote branch ' . l:remote_tracking_branch . ' as well? (y)es / (n)o ')
