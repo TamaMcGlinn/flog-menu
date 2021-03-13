@@ -205,25 +205,6 @@ fu! flogmenu#rebase() abort
   call flogmenu#rebase_fromcache()
 endfunction
 
-fu! flogmenu#excluding_rebase_fromcache() abort
-  let l:target = g:flogmenu_selection_info.selected_commit_hash
-  echom '\nTo conclude, open the context menu again on the commit you want to exclude.\n' .
-      \ 'To cancel, exclude the final commit on your branch.'
-  let g:flogmenu_takeover_context_menu = {'type':    'rebase_exclude',
-                                        \ 'target':  l:target }
-endfunction
-
-fu! flogmenu#excluding_rebase() abort
-  call flogmenu#set_selection_info()
-  call flogmenu#excluding_rebase_fromcache()
-endfunction
-
-fu! flogmenu#rebase_exclude_fromcache() abort
-  let l:target = g:flogmenu_takeover_context_menu.target
-  let l:exclude = g:flogmenu_selection_info.selected_commit_hash
-  execute 'Git rebase --interactive --autosquash --onto ' . l:target . ' ' . l:exclude
-endfunction
-
 fu! flogmenu#reset_hard() abort
   call flog#run_command('Git reset --hard %h', 0, 1)
 endfunction
@@ -317,35 +298,28 @@ endfunction
 
 fu! flogmenu#open_main_contextmenu() abort
   call flogmenu#set_selection_info()
-  if type(g:flogmenu_takeover_context_menu) ==# v:t_dict
-    if g:flogmenu_takeover_context_menu.type ==# 'rebase_exclude'
-      call flogmenu#rebase_exclude_fromcache()
-    endif
-    let g:flogmenu_takeover_context_menu = v:null
-  else
-    " Note; all menu items should refer to _fromcache variants,
-    " whereas all direct bindings refer to the regular variant
-    " this ensures that set_selection_info is called once, even if
-    " the user traverses several menu's
-    let l:flogmenu_main_menu = [
-                             \ ['&Checkout', 'call flogmenu#checkout_fromcache()'],
-                             \ ['&Merge', 'call flogmenu#merge_fromcache()'],
-                             \ ['Reset --mi&xed', 'call flogmenu#reset_mixed()'],
-                             \ ['Reset --&hard', 'call flogmenu#reset_hard()'],
-                             \ ['Cherry&pick', 'call flogmenu#cherrypick()'],
-                             \ ['Re&vert', 'call flogmenu#revert()'],
-                             \ ['Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
-                             \ ['&Rebase', 'call flogmenu#rebase_fromcache()'],
-                             \ ['&Fixup', 'call flogmenu#fixup_fromcache()'],
-                             \ ['&Amend', 'call flogmenu#amend_commit_fromcache()'],
-                             \ ['Si&gnifyThis', 'call flogmenu#signify_this()'],
-                             \ ]
-    let l:branches = len(g:flogmenu_selection_info.local_branches) + len(g:flogmenu_selection_info.remote_branches)
-    if l:branches > 0
-      call add(l:flogmenu_main_menu, ['&Delete branch', 'call flogmenu#delete_branch_fromcache()'])
-    endif
-    call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
+  " Note; all menu items should refer to _fromcache variants,
+  " whereas all direct bindings refer to the regular variant
+  " this ensures that set_selection_info is called once, even if
+  " the user traverses several menu's
+  let l:flogmenu_main_menu = [
+                           \ ['&Checkout', 'call flogmenu#checkout_fromcache()'],
+                           \ ['&Merge', 'call flogmenu#merge_fromcache()'],
+                           \ ['Reset --mi&xed', 'call flogmenu#reset_mixed()'],
+                           \ ['Reset --&hard', 'call flogmenu#reset_hard()'],
+                           \ ['Cherry&pick', 'call flogmenu#cherrypick()'],
+                           \ ['Re&vert', 'call flogmenu#revert()'],
+                           \ ['Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
+                           \ ['&Rebase', 'call flogmenu#rebase_fromcache()'],
+                           \ ['&Fixup', 'call flogmenu#fixup_fromcache()'],
+                           \ ['&Amend', 'call flogmenu#amend_commit_fromcache()'],
+                           \ ['Si&gnifyThis', 'call flogmenu#signify_this()'],
+                           \ ]
+  let l:branches = len(g:flogmenu_selection_info.local_branches) + len(g:flogmenu_selection_info.remote_branches)
+  if l:branches > 0
+    call add(l:flogmenu_main_menu, ['&Delete branch', 'call flogmenu#delete_branch_fromcache()'])
   endif
+  call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
 endfunction
 
 fu! flogmenu#open_git_log() abort

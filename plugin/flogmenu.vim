@@ -46,8 +46,6 @@ let g:flogmenu_opts = {'index':g:quickui#context#cursor}
 
 let g:flogmenu_selection_info = {}
 
-let g:flogmenu_takeover_context_menu = v:null
-
 " Commands
 
 command! SignifyReset call flogmenu#set_signify_target('HEAD')
