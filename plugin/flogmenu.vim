@@ -17,9 +17,28 @@ let g:flogmenu_logmenu = {'name': 'Log Menu',
  \'6': [':Flog -format=%ad\ [%h]\ {%an}%d\ (%S)\ %s -all -path=%:h:h:h:h:h:h', 'File ../../../../../ history'],
  \}
 
+" TODO make these really work
+" let g:flogmenu_stashmenu = {'name': 'Git stash menu',
+"               \'h': [':Git -p stash show -p stash', 'Show'],
+"               \'l': [':Git -p stash list',          'List'],
+"               \'a': [':Git stash apply stash@{',    'Apply'],
+"               \'p': [':Git stash pop',              'Pop'],
+"               \'s': [':Git stash push<space>',      'Stash'],
+"               \}
+
+" TODO
+" r :Ggrep ""<left>
+" / :Ggrep "<c-r>/"<cr>
+
+command! -bang -nargs=* GGrep
+  \ call fzf#vim#grep(
+  \   'git grep --line-number -- '.shellescape(<q-args>).' $(git rev-list --all)', 0,
+  \   fzf#vim#with_preview({'dir': systemlist('git rev-parse --show-toplevel')[0]}), <bang>0)
+
 let g:flogmenu_gitmenu = {'name': 'Git Menu',
              \'a': ['call flogmenu#open_all_windows()', 'All windows'],
              \'s': [':Gstatus', 'Status'],
+             \'h': [g:flogmenu_stashmenu, 'Stash'],
              \'r': [':Gedit', 'Toggle index / working file version'],
              \'R': [':Gread', 'Reset to index'],
              \'j': [':Git fetch --all', 'Fetch'],
