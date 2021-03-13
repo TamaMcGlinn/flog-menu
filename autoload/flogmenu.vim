@@ -255,13 +255,17 @@ fu! flogmenu#delete_other_branch_fromcache(branch) abort
   call flogmenu#git('branch -D ' . a:branch)
   if l:remote_tracking_branch != v:null
     call inputsave()
-    let l:wants_to_switch = input('Delete remote branch ' . l:remote_tracking_branch . ' as well? (y)es / (n)o ')
+    let l:delete_remote = input('Delete remote branch ' . l:remote_tracking_branch . ' as well? (y)es / (n)o ')
     call inputrestore()
-    if l:wants_to_switch ==# 'y'
-      call flogmenu#git('push ' . substitute(l:remote_tracking_branch, '/', ' --delete ', ''))
+    if l:delete_remote ==# 'y'
+      call flogmenu#delete_remote_branch(l:remote_tracking_branch)
     endif
   endif
   call flog#populate_graph_buffer()
+endfunction
+
+fu! flogmenu#delete_remote_branch(remote_branch) abort
+  call flogmenu#git('push ' . substitute(a:remote_branch, '/', ' --delete ', ''))
 endfunction
 
 fu! flogmenu#delete_branch_fromcache() abort
@@ -271,6 +275,9 @@ fu! flogmenu#delete_branch_fromcache() abort
   endif
   for l:local_branch in g:flogmenu_selection_info.other_local_branches
     call add(l:branch_menu, [l:local_branch, 'call flogmenu#delete_other_branch_fromcache("' . l:local_branch . '")'])
+  endfor
+  for l:remote_branch in g:flogmenu_selection_info.remote_branches
+    call add(l:branch_menu, [l:remote_branch, 'call flogmenu#delete_remote_branch("' . l:remote_branch . '")'])
   endfor
   " TODO remote branches
   call quickui#context#open(l:branch_menu, g:flogmenu_opts)
