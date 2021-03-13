@@ -1,4 +1,15 @@
 
+fu! flogmenu#open_menu(menu) abort
+  if len(a:menu) == 0
+    throw "Refusing to open empty menu"
+  endif
+  if len(a:menu) == 1
+    execute a:menu[0][1]
+  else
+    call quickui#context#open(a:menu, g:flogmenu_opts)
+  endif
+endfunction
+
 fu! flogmenu#git_ignore_errors(command) abort
   let l:cmd = 'git ' . a:command
   let l:out = system(l:cmd)
@@ -137,7 +148,7 @@ fu! flogmenu#create_branch_menu_fromcache() abort
           \ 'call flogmenu#create_given_branch_fromcache("' . l:unmatched_branch . '")'])
   endfor
   call add(l:branch_menu, ['-custom', 'call flogmenu#create_input_branch_fromcache()'])
-  call quickui#context#open(l:branch_menu, g:flogmenu_opts)
+  call flogmenu#open_menu(l:branch_menu)
 endfunction
 
 fu! flogmenu#create_branch_menu() abort
@@ -192,7 +203,7 @@ fu! flogmenu#checkout_fromcache() abort
   " Finally, choices to make new branch or none at all
   call add(l:branch_menu, ['-create branch', 'call flogmenu#create_branch_menu_fromcache()'])
   call add(l:branch_menu, ['-detached HEAD', 'call flogmenu#git_then_update("checkout " . g:flogmenu_selection_info.selected_commit_hash)'])
-  call quickui#context#open(l:branch_menu, g:flogmenu_opts)
+  call flogmenu#open_menu(l:branch_menu)
 endfunction
 
 fu! flogmenu#rebase_fromcache() abort
@@ -233,7 +244,7 @@ fu! flogmenu#merge_fromcache() abort
   if len(l:merge_choices) == 1
     execute l:merge_choices[0][1]
   else
-    call quickui#context#open(l:merge_choices, g:flogmenu_opts)
+    call flogmenu#open_menu(l:merge_choices)
   endif
 endfunction
 
@@ -280,7 +291,7 @@ fu! flogmenu#delete_branch_fromcache() abort
     call add(l:branch_menu, [l:remote_branch, 'call flogmenu#delete_remote_branch("' . l:remote_branch . '")'])
   endfor
   " TODO remote branches
-  call quickui#context#open(l:branch_menu, g:flogmenu_opts)
+  call flogmenu#open_menu(l:branch_menu)
 endfunction
 
 fu! flogmenu#fixup_fromcache() abort
@@ -326,7 +337,7 @@ fu! flogmenu#open_main_contextmenu() abort
   if l:branches > 0
     call add(l:flogmenu_main_menu, ['&Delete branch', 'call flogmenu#delete_branch_fromcache()'])
   endif
-  call quickui#context#open(l:flogmenu_main_menu, g:flogmenu_opts)
+  call flogmenu#open_menu(l:flogmenu_main_menu)
 endfunction
 
 fu! flogmenu#open_git_log() abort
