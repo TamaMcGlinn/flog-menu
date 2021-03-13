@@ -1,8 +1,16 @@
 
-fu! flogmenu#git(command) abort
+fu! flogmenu#git_ignore_errors(command) abort
   let l:cmd = 'git ' . a:command
   let l:out = system(l:cmd)
   return substitute(out, '\c\C\n$', '', '')
+endfunction
+
+fu! flogmenu#git(command) abort
+  let l:output = flogmenu#git_ignore_errors(a:command)
+  if v:shell_error
+    throw 'git ' . a:command . ' failed with: ' . l:output
+  endif
+  return l:output
 endfunction
 
 fu! flogmenu#git_then_update(command) abort
@@ -87,29 +95,32 @@ fu! flogmenu#create_given_branch_fromcache(branchname) abort
 endfunction
 
 fu! flogmenu#is_remote(remotename) abort
-  call flogmenu#git('remote -v | (while read line; do echo $line | { read first rest; echo $first; }; done) | grep "^' . a:remotename . '$"')
+  " TODO replace grep with vimscript direct search of remote -v output
+  call flogmenu#git_ignore_errors('remote -v | (while read line; do echo $line | { read first rest; echo $first; }; done) | grep "^' . a:remotename . '$"')
   return v:shell_error == 0
 endfunction
 
 fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_branch) abort
   let l:branch = a:branchname
-  let l:track_remote = 0
+  let l:track_remote = v:false
   if a:branchname =~# '.*/.*'
     let l:remote = substitute(a:branchname, '/.*', '', '')
     if flogmenu#is_remote(l:remote)
-      let l:track_remote = 1
+      let l:track_remote = v:true
       let l:branch = substitute(a:branchname, '^[^/]*/', '', '')
     endif
   endif
   if a:switch_to_branch
-    call flogmenu#git_then_update('checkout -B ' . l:branch . ' ' . g:flogmenu_selection_info.selected_commit_hash)
+    call flogmenu#git('checkout -B ' . l:branch . ' ' . g:flogmenu_selection_info.selected_commit_hash)
+    " TODO check if local branch of same name has commits not in this commit
   else
-    call flogmenu#git_then_update('branch ' . l:branch . ' ' . g:flogmenu_selection_info.selected_commit_hash)
+    call flogmenu#git('branch ' . l:branch . ' ' . g:flogmenu_selection_info.selected_commit_hash)
   endif
   if l:track_remote
-    let l:command = 'branch --set-upstream ' . l:branch . ' ' . l:remote . '/' . l:branch
+    let l:command = 'branch --set-upstream-to ' . l:remote . ' ' . l:branch
     call flogmenu#git(l:command)
   endif
+  call flog#populate_graph_buffer()
 endfunction
 
 fu! flogmenu#create_input_branch_fromcache() abort
@@ -136,8 +147,8 @@ endfunction
 
 " Returns 1 if the user chose to abort, otherwise 0
 fu! flogmenu#handle_unstaged_changes() abort
-  call flogmenu#git('update-index --refresh')
-  call flogmenu#git('diff-index --quiet HEAD --')
+  call flogmenu#git_ignore_errors('update-index --refresh')
+  call flogmenu#git_ignore_errors('diff-index --quiet HEAD --')
   let l:has_unstaged_changes = v:shell_error != 0
   if l:has_unstaged_changes
     call inputsave()
@@ -176,7 +187,7 @@ fu! flogmenu#checkout_fromcache() abort
   " Next, offer the choices to create branches for unmatched remote branches
   for l:unmatched_branch in g:flogmenu_selection_info.unmatched_remote_branches
     call add(l:branch_menu, [l:unmatched_branch,
-          \ 'call flogmenu#create_given_branch_and_switch_fromcache("' . l:unmatched_branch . '", v:false)'])
+          \ 'call flogmenu#create_given_branch_and_switch_fromcache("' . l:unmatched_branch . '", v:true)'])
   endfor
   " Finally, choices to make new branch or none at all
   call add(l:branch_menu, ['-create branch', 'call flogmenu#create_branch_menu_fromcache()'])
@@ -247,7 +258,7 @@ endfunction
 
 fu! flogmenu#delete_current_branch_fromcache() abort
   call flogmenu#git('checkout --detach')
-  call flogmenu#delete_specific_branch_fromcache(g:flogmenu_selection_info.current_branch)
+  call flogmenu#delete_other_branch_fromcache(g:flogmenu_selection_info.current_branch)
 endfunction
 
 fu! flogmenu#delete_current_branch() abort
@@ -255,12 +266,21 @@ fu! flogmenu#delete_current_branch() abort
   call flogmenu#delete_branch_fromcache()
 endfunction
 
-fu! flogmenu#delete_specific_branch_fromcache(branch) abort
-  let remote_tracking_branch = flogmenu#git('rev-parse --abbrev-ref ' . a:branch . '@{upstream}')
-  echom l:remote_tracking_branch
-  return
-  call flogmenu#git_then_update('branch -D ' . a:branch)
-  " TODO check if there is a tracking branch; if so, offer to remove that as well
+fu! flogmenu#delete_other_branch_fromcache(branch) abort
+  let remote_tracking_branch = flogmenu#git_ignore_errors('rev-parse --abbrev-ref ' . a:branch . '@{upstream}')
+  if v:shell_error
+    let l:remote_tracking_branch = v:null
+  endif
+  call flogmenu#git('branch -D ' . a:branch)
+  if l:remote_tracking_branch != v:null
+    call inputsave()
+    let l:wants_to_switch = input('Delete remote branch ' . l:remote_tracking_branch . ' as well? (y)es / (n)o ')
+    call inputrestore()
+    if l:wants_to_switch ==# 'y'
+      call flogmenu#git('push ' . substitute(l:remote_tracking_branch, '/', ' --delete ', ''))
+    endif
+  endif
+  call flog#populate_graph_buffer()
 endfunction
 
 fu! flogmenu#delete_branch_fromcache() abort
@@ -269,7 +289,7 @@ fu! flogmenu#delete_branch_fromcache() abort
     call add(l:branch_menu, [g:flogmenu_selection_info.current_branch, 'call flogmenu#delete_current_branch_fromcache()'])
   endif
   for l:local_branch in g:flogmenu_selection_info.other_local_branches
-    call add(l:branch_menu, [l:local_branch, 'call flogmenu#git_then_update("branch -D ' . l:local_branch . '")'])
+    call add(l:branch_menu, [l:local_branch, 'call flogmenu#delete_other_branch_fromcache("' . l:local_branch . '")'])
   endfor
   " TODO remote branches
   call quickui#context#open(l:branch_menu, g:flogmenu_opts)
