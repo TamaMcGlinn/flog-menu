@@ -265,7 +265,7 @@ fu! flogmenu#delete_other_branch_fromcache(branch) abort
 endfunction
 
 fu! flogmenu#delete_remote_branch(remote_branch) abort
-  call flogmenu#git('push ' . substitute(a:remote_branch, '/', ' --delete ', ''))
+  call flogmenu#git_then_update('push ' . substitute(a:remote_branch, '/', ' --delete ', ''))
 endfunction
 
 fu! flogmenu#delete_branch_fromcache() abort
