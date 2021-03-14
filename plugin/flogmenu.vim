@@ -18,17 +18,13 @@ let g:flogmenu_logmenu = {'name': 'Log Menu',
  \}
 
 " TODO make these really work
-" let g:flogmenu_stashmenu = {'name': 'Git stash menu',
-"               \'h': [':Git -p stash show -p stash', 'Show'],
-"               \'l': [':Git -p stash list',          'List'],
-"               \'a': [':Git stash apply stash@{',    'Apply'],
-"               \'p': [':Git stash pop',              'Pop'],
-"               \'s': [':Git stash push<space>',      'Stash'],
-"               \}
-
-" TODO
-" r :Ggrep ""<left>
-" / :Ggrep "<c-r>/"<cr>
+let g:flogmenu_stashmenu = {'name': 'Git stash menu',
+              \'h': [':Git -p stash show -p stash', 'Show'],
+              \'l': [':Git -p stash list',          'List'],
+              \'a': [':Git stash apply stash@{',    'Apply'],
+              \'p': [':Git stash pop',              'Pop'],
+              \'s': [':Git stash push<space>',      'Stash'],
+              \}
 
 command! -bang -nargs=* GGrep
   \ call fzf#vim#grep(
