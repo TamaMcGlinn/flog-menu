@@ -26,10 +26,14 @@ let g:flogmenu_stashmenu = {'name': 'Git stash menu',
               \'s': [':Git stash push<space>',      'Stash'],
               \}
 
-command! -bang -nargs=* GGrep
-  \ call fzf#vim#grep(
-  \   'git grep --line-number -- '.shellescape(<q-args>).' $(git rev-list --all)', 0,
-  \   fzf#vim#with_preview({'dir': systemlist('git rev-parse --show-toplevel')[0]}), <bang>0)
+function Open_Git_Ref(reference) abort
+  let l:all = split(a:reference, ':')
+  execute 'Gedit ' . l:all[0] . ':' .  l:all[1] . ':' . l:all[2]
+endfunction
+
+command! -bang -nargs=* GitGrep
+  \ call fzf#run(
+  \   fzf#wrap({'source': 'git grep --line-number -- '.shellescape(<q-args>).' $(git rev-list --all)', 'sink': function('Open_Git_Ref')}), <bang>0)
 
 let g:flogmenu_gitmenu = {'name': 'Git Menu',
              \'a': ['call flogmenu#open_all_windows()', 'All windows'],
