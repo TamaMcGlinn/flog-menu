@@ -28,7 +28,10 @@ let g:flogmenu_stashmenu = {'name': 'Git stash menu',
 
 function Open_Git_Ref(reference) abort
   let l:all = split(a:reference, ':')
-  execute 'Gedit ' . l:all[0] . ':' .  l:all[1] . ':' . l:all[2]
+  let l:fugitive_command = 'Gedit ' . l:all[0] . ':' .  l:all[1]
+  let l:line = l:all[2]
+  execute l:fugitive_command
+  silent execute 'normal! ' . l:line . 'G'
 endfunction
 
 command! -bang -nargs=* GitGrep
@@ -52,10 +55,11 @@ let g:flogmenu_gitmenu = {'name': 'Git Menu',
              \'t': [':GTags', 'Tags'],
              \'c': [':Git commit', 'Commit'],
              \'.': [':Git add .', 'Add CWD'],
-             \',': [':Git add %', 'Add file'],
+             \'g': [':Git add %', 'Add file'],
              \'u': ['call flogmenu#open_unmerged()', 'Open unmerged files'],
              \'d': [':Git add %:h', 'Add file dir'],
              \'l': [g:flogmenu_logmenu, 'Log'],
+             \'/': [':GitGrep', 'Search'],
              \}
 
 " set cursor to the last position

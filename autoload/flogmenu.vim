@@ -1,7 +1,7 @@
 
 fu! flogmenu#open_menu(menu) abort
   if len(a:menu) == 0
-    throw "Refusing to open empty menu"
+    throw 'Refusing to open empty menu'
   endif
   if len(a:menu) == 1
     execute a:menu[0][1]
