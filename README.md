@@ -148,6 +148,7 @@ let mapleader = " "
 " Flog menu bindings
 augroup flogmenu
   autocmd FileType floggraph nno <buffer> <Leader>m :<C-U>call flogmenu#open_main_contextmenu()<CR>
+  autocmd FileType floggraph vno <buffer> <Leader>m :<C-U>call flogmenu#open_visual_contextmenu()<CR>
 augroup END
 
 " Recommended: set the quickui border style
