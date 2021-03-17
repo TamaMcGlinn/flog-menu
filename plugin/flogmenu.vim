@@ -26,17 +26,10 @@ let g:flogmenu_stashmenu = {'name': 'Git stash menu',
               \'s': [':Git stash push<space>',      'Stash'],
               \}
 
-function Open_Git_Ref(reference) abort
-  let l:all = split(a:reference, ':')
-  let l:fugitive_command = 'Gedit ' . l:all[0] . ':' .  l:all[1]
-  let l:line = l:all[2]
-  execute l:fugitive_command
-  silent execute 'normal! ' . l:line . 'G'
-endfunction
-
+" don't ask me why shellescape('') - it works
 command! -bang -nargs=* GitGrep
   \ call fzf#run(
-  \   fzf#wrap({'source': 'git grep --line-number -- '.shellescape(<q-args>).' $(git rev-list --all)', 'sink': function('Open_Git_Ref')}), <bang>0)
+  \   fzf#wrap({'source': 'git grep --line-number -- '.shellescape('').' $(git rev-list --all)', 'sink': function('flogmenu#open_git_ref')}), <bang>0)
 
 let g:flogmenu_gitmenu = {'name': 'Git Menu',
              \'a': ['call flogmenu#open_all_windows()', 'All windows'],
@@ -67,7 +60,8 @@ let g:flogmenu_opts = {'index':g:quickui#context#cursor}
 
 " Global variables
 
-let g:flogmenu_selection_info = {}
+let g:flogmenu_normalmode_cursorinfo = {}
+let g:flogmenu_visual_selection_info = {}
 
 " Commands
 

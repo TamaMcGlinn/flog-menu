@@ -1,4 +1,12 @@
 
+function flogmenu#open_git_ref(reference) abort
+  let l:all = split(a:reference, ':')
+  let l:fugitive_command = 'Gedit ' . l:all[0] . ':' .  l:all[1]
+  let l:line = l:all[2]
+  execute l:fugitive_command
+  silent execute 'normal! ' . l:line . 'G'
+endfunction
+
 fu! flogmenu#open_menu(menu) abort
   if len(a:menu) == 0
     throw 'Refusing to open empty menu'
@@ -85,12 +93,18 @@ endfunction
 " will call this first to set the global g:flogmenu_selection_info
 fu! flogmenu#set_selection_info() abort
   let l:commit = flog#get_commit_at_line()
-  let g:flogmenu_selection_info = flogmenu#get_refs(l:commit)
-  let g:flogmenu_selection_info['selected_commit'] = l:commit
+  let g:flogmenu_normalmode_cursorinfo = flogmenu#get_refs(l:commit)
+  let g:flogmenu_normalmode_cursorinfo['selected_commit'] = l:commit
   let l:current_commit = flogmenu#git('rev-parse HEAD')
   let l:full_commit_hash = fugitive#RevParse(l:commit.short_commit_hash)
-  let g:flogmenu_selection_info['selected_commit_hash'] = l:full_commit_hash
-  let g:flogmenu_selection_info['different_commit'] = l:current_commit != l:full_commit_hash
+  let g:flogmenu_normalmode_cursorinfo['selected_commit_hash'] = l:full_commit_hash
+  let g:flogmenu_normalmode_cursorinfo['different_commit'] = l:current_commit != l:full_commit_hash
+endfunction
+
+fu! flogmenu#set_visual_selection_info() abort
+  let [l:first, l:second] = flog#get_commit_selection()
+  let g:flogmenu_visual_selection_info['first'] = fugitive#RevParse(l:first.short_commit_hash)
+  let g:flogmenu_visual_selection_info['second'] = fugitive#RevParse(l:second.short_commit_hash)
 endfunction
 
 fu! flogmenu#create_branch_menu() abort
@@ -122,10 +136,10 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
     endif
   endif
   if a:switch_to_branch
-    call flogmenu#git('checkout -B ' . l:branch . ' ' . g:flogmenu_selection_info.selected_commit_hash)
+    call flogmenu#git('checkout -B ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
     " TODO check if local branch of same name has commits not in this commit
   else
-    call flogmenu#git('branch ' . l:branch . ' ' . g:flogmenu_selection_info.selected_commit_hash)
+    call flogmenu#git('branch ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
   endif
   if l:track_remote
     let l:command = 'branch --set-upstream-to ' . l:remote . ' ' . l:branch
@@ -143,7 +157,7 @@ endfunction
 
 fu! flogmenu#create_branch_menu_fromcache() abort
   let l:branch_menu = []
-  for l:unmatched_branch in g:flogmenu_selection_info.unmatched_remote_branches
+  for l:unmatched_branch in g:flogmenu_normalmode_cursorinfo.unmatched_remote_branches
     call add(l:branch_menu, [l:unmatched_branch,
           \ 'call flogmenu#create_given_branch_fromcache("' . l:unmatched_branch . '")'])
   endfor
@@ -184,7 +198,7 @@ endfunction
 
 fu! flogmenu#checkout_fromcache() abort
   " Are we moving to a different commit? If so, check the git status is clean
-  if g:flogmenu_selection_info.different_commit
+  if g:flogmenu_normalmode_cursorinfo.different_commit
     if flogmenu#handle_unstaged_changes() == 1
       return
     endif
@@ -192,11 +206,11 @@ fu! flogmenu#checkout_fromcache() abort
   let l:branch_menu = []
   " If there are other local branches, these are the most likely choices
   " so they come first
-  for l:local_branch in g:flogmenu_selection_info.other_local_branches
+  for l:local_branch in g:flogmenu_normalmode_cursorinfo.other_local_branches
     call add(l:branch_menu, [l:local_branch, 'call flogmenu#git_then_update("checkout ' . l:local_branch . '")'])
   endfor
   " Next, offer the choices to create branches for unmatched remote branches
-  for l:unmatched_branch in g:flogmenu_selection_info.unmatched_remote_branches
+  for l:unmatched_branch in g:flogmenu_normalmode_cursorinfo.unmatched_remote_branches
     call add(l:branch_menu, [l:unmatched_branch,
           \ 'call flogmenu#create_given_branch_and_switch_fromcache("' . l:unmatched_branch . '", v:true)'])
   endfor
@@ -207,7 +221,7 @@ fu! flogmenu#checkout_fromcache() abort
 endfunction
 
 fu! flogmenu#rebase_fromcache() abort
-  let l:target = g:flogmenu_selection_info.selected_commit_hash
+  let l:target = g:flogmenu_normalmode_cursorinfo.selected_commit_hash
   execute 'Git rebase ' . l:target . ' --interactive --autosquash'
 endfunction
 
@@ -238,7 +252,7 @@ fu! flogmenu#merge_fromcache() abort
     return
   endif
   let l:merge_choices = []
-  for l:local_branch in g:flogmenu_selection_info.other_local_branches + g:flogmenu_selection_info.unmatched_remote_branches
+  for l:local_branch in g:flogmenu_normalmode_cursorinfo.other_local_branches + g:flogmenu_normalmode_cursorinfo.unmatched_remote_branches
     call add(l:merge_choices, [l:local_branch, 'call flog#run_command("Git merge ' . l:local_branch . '", 0, 1)'])
   endfor
   if len(l:merge_choices) == 1
@@ -250,7 +264,7 @@ endfunction
 
 fu! flogmenu#delete_current_branch_fromcache() abort
   call flogmenu#git('checkout --detach')
-  call flogmenu#delete_other_branch_fromcache(g:flogmenu_selection_info.current_branch)
+  call flogmenu#delete_other_branch_fromcache(g:flogmenu_normalmode_cursorinfo.current_branch)
 endfunction
 
 fu! flogmenu#delete_current_branch() abort
@@ -281,13 +295,13 @@ endfunction
 
 fu! flogmenu#delete_branch_fromcache() abort
   let l:branch_menu = []
-  if index(g:flogmenu_selection_info.local_branches, g:flogmenu_selection_info.current_branch) != -1
-    call add(l:branch_menu, [g:flogmenu_selection_info.current_branch, 'call flogmenu#delete_current_branch_fromcache()'])
+  if index(g:flogmenu_normalmode_cursorinfo.local_branches, g:flogmenu_normalmode_cursorinfo.current_branch) != -1
+    call add(l:branch_menu, [g:flogmenu_normalmode_cursorinfo.current_branch, 'call flogmenu#delete_current_branch_fromcache()'])
   endif
-  for l:local_branch in g:flogmenu_selection_info.other_local_branches
+  for l:local_branch in g:flogmenu_normalmode_cursorinfo.other_local_branches
     call add(l:branch_menu, [l:local_branch, 'call flogmenu#delete_other_branch_fromcache("' . l:local_branch . '")'])
   endfor
-  for l:remote_branch in g:flogmenu_selection_info.remote_branches
+  for l:remote_branch in g:flogmenu_normalmode_cursorinfo.remote_branches
     call add(l:branch_menu, [l:remote_branch, 'call flogmenu#delete_remote_branch("' . l:remote_branch . '")'])
   endfor
   " TODO remote branches
@@ -296,7 +310,7 @@ endfunction
 
 fu! flogmenu#fixup_fromcache() abort
   " TODO if no staged changes, ask whether to stage all
-  execute 'Git commit --fixup=' . g:flogmenu_selection_info.selected_commit_hash
+  execute 'Git commit --fixup=' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash
 endfunction
 
 fu! flogmenu#fixup() abort
@@ -306,7 +320,7 @@ endfunction
 
 fu! flogmenu#amend_commit_fromcache() abort
   call flogmenu#fixup_fromcache()
-  execute 'Git rebase --autosquash ' . g:flogmenu_selection_info.selected_commit_hash . '~1'
+  execute 'Git rebase --autosquash ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash . '~1'
 endfunction
 
 fu! flogmenu#amend_commit() abort
@@ -333,11 +347,25 @@ fu! flogmenu#open_main_contextmenu() abort
                            \ ['&Amend', 'call flogmenu#amend_commit_fromcache()'],
                            \ ['Si&gnifyThis', 'call flogmenu#signify_this()'],
                            \ ]
-  let l:branches = len(g:flogmenu_selection_info.local_branches) + len(g:flogmenu_selection_info.remote_branches)
+  let l:branches = len(g:flogmenu_normalmode_cursorinfo.local_branches) + len(g:flogmenu_normalmode_cursorinfo.remote_branches)
   if l:branches > 0
     call add(l:flogmenu_main_menu, ['&Delete branch', 'call flogmenu#delete_branch_fromcache()'])
   endif
   call flogmenu#open_menu(l:flogmenu_main_menu)
+endfunction
+
+fu! flogmenu#open_visual_contextmenu() abort
+  call flogmenu#set_visual_selection_info()
+  let l:flogmenu_visual_menu = [
+                           \ ['&Search', 'call flogmenu#search_visual_selection_fromcache()'],
+                           \ ]
+  call flogmenu#open_menu(l:flogmenu_visual_menu)
+endfunction
+
+fu! flogmenu#search_visual_selection_fromcache() abort
+  let l:youngest_commit = g:flogmenu_visual_selection_info['first']
+  let l:oldest_commit = g:flogmenu_visual_selection_info['second']
+  call fzf#run(fzf#wrap({'source': 'git grep --line-number -- '.shellescape('').' $(git rev-list '.l:oldest_commit.'^..'.l:youngest_commit.')', 'sink': function('flogmenu#open_git_ref')}), 0)
 endfunction
 
 fu! flogmenu#open_git_log() abort
@@ -359,7 +387,7 @@ fu! flogmenu#set_signify_target(target_commit) abort
 endfunction
 
 fu! flogmenu#signify_this() abort
-  call flogmenu#set_signify_target(g:flogmenu_selection_info['selected_commit_hash'])
+  call flogmenu#set_signify_target(g:flogmenu_normalmode_cursorinfo['selected_commit_hash'])
 endfunction
 
 " The following functions have nothing to do with flog
