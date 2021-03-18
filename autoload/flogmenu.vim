@@ -1,5 +1,12 @@
 
 function flogmenu#open_git_ref(reference) abort
+  let l:all = split(a:reference)
+  let l:full_commit_hash = fugitive#RevParse(l:all[0])
+  let l:fugitive_command = 'Gedit ' . l:full_commit_hash
+  execute l:fugitive_command
+endfunction
+
+function flogmenu#open_git_ref_file(reference) abort
   let l:all = split(a:reference, ':')
   let l:fugitive_command = 'Gedit ' . l:all[0] . ':' .  l:all[1]
   let l:line = l:all[2]
@@ -357,15 +364,22 @@ endfunction
 fu! flogmenu#open_visual_contextmenu() abort
   call flogmenu#set_visual_selection_info()
   let l:flogmenu_visual_menu = [
-                           \ ['&Search', 'call flogmenu#search_visual_selection_fromcache()'],
+                           \ ['&Search diffs', 'call flogmenu#search_visual_selection_diffs_fromcache()'],
+                           \ ['Search file &contents', 'call flogmenu#search_visual_selection_fromcache()'],
                            \ ]
   call flogmenu#open_menu(l:flogmenu_visual_menu)
+endfunction
+
+fu! flogmenu#search_visual_selection_diffs_fromcache() abort
+  let l:youngest_commit = g:flogmenu_visual_selection_info['first']
+  let l:oldest_commit = g:flogmenu_visual_selection_info['second']
+  call fzf#run(fzf#wrap({'source': 'git log --oneline -S -- '.shellescape('').' '.l:oldest_commit.'^..'.l:youngest_commit, 'sink': function('flogmenu#open_git_ref')}), 0)
 endfunction
 
 fu! flogmenu#search_visual_selection_fromcache() abort
   let l:youngest_commit = g:flogmenu_visual_selection_info['first']
   let l:oldest_commit = g:flogmenu_visual_selection_info['second']
-  call fzf#run(fzf#wrap({'source': 'git grep --line-number -- '.shellescape('').' $(git rev-list '.l:oldest_commit.'^..'.l:youngest_commit.')', 'sink': function('flogmenu#open_git_ref')}), 0)
+  call fzf#run(fzf#wrap({'source': 'git grep --line-number -- '.shellescape('').' $(git rev-list '.l:oldest_commit.'^..'.l:youngest_commit.')', 'sink': function('flogmenu#open_git_ref_file')}), 0)
 endfunction
 
 fu! flogmenu#open_git_log() abort
