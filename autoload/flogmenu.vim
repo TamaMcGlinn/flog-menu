@@ -149,7 +149,7 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
     call flogmenu#git('branch ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
   endif
   if l:track_remote
-    let l:command = 'branch --set-upstream-to ' . l:remote . ' ' . l:branch
+    let l:command = 'branch --set-upstream-to ' . l:remote . '/' . l:branch
     call flogmenu#git(l:command)
   endif
   call flog#populate_graph_buffer()
