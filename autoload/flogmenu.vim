@@ -1,11 +1,4 @@
 
-function flogmenu#open_git_ref(reference) abort
-  let l:all = split(a:reference)
-  let l:full_commit_hash = fugitive#RevParse(l:all[0])
-  let l:fugitive_command = 'Gedit ' . l:full_commit_hash
-  execute l:fugitive_command
-endfunction
-
 function flogmenu#open_git_ref_file(reference) abort
   let l:all = split(a:reference, ':')
   let l:fugitive_command = 'Gedit ' . l:all[0] . ':' .  l:all[1]
@@ -335,6 +328,30 @@ fu! flogmenu#amend_commit() abort
   call flogmenu#amend_commit_fromcache()
 endfunction
 
+fu! flogmenu#navigate() abort
+  echom "TODO add navigation commands"
+endfunction
+
+" I keep all the menu options in here to ensure that I don't double bind
+" something; the dictionary will fail immediately then
+let g:flogmenu_unused_dict = {'j': 'up',
+                    \'k': 'down',
+                    \'c': 'checkout',
+                    \'m': 'merge',
+                    \'i': 'index',
+                    \'h': 'hard',
+                    \'n': 'navigate',
+                    \'p': 'cherrypick',
+                    \'v': 'revert',
+                    \'b': 'branch',
+                    \'r': 'rebase',
+                    \'f': 'fixup',
+                    \'a': 'amend',
+                    \'s': 'signify',
+                    \'u': 'p&ush',
+                    \'U': 'force p&Ush',
+                    \'d': 'delete'}
+
 fu! flogmenu#open_main_contextmenu() abort
   call flogmenu#set_selection_info()
   " Note; all menu items should refer to _fromcache variants,
@@ -342,21 +359,22 @@ fu! flogmenu#open_main_contextmenu() abort
   " this ensures that set_selection_info is called once, even if
   " the user traverses several menu's
   let l:flogmenu_main_menu = [
-                           \ ['&Checkout', 'call flogmenu#checkout_fromcache()'],
-                           \ ['&Merge', 'call flogmenu#merge_fromcache()'],
-                           \ ['Reset &index', 'call flogmenu#reset_mixed()'],
-                           \ ['Reset --&hard', 'call flogmenu#reset_hard()'],
-                           \ ['Cherry&pick', 'call flogmenu#cherrypick()'],
-                           \ ['Re&vert', 'call flogmenu#revert()'],
-                           \ ['Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
-                           \ ['&Rebase', 'call flogmenu#rebase_fromcache()'],
-                           \ ['&Fixup', 'call flogmenu#fixup_fromcache()'],
-                           \ ['&Amend', 'call flogmenu#amend_commit_fromcache()'],
-                           \ ['Si&gnifyThis', 'call flogmenu#signify_this()'],
+                           \ ['↯ &Checkout', 'call flogmenu#checkout_fromcache()'],
+                           \ ['ᛦ &Merge', 'call flogmenu#merge_fromcache()'],
+                           \ ['⇠ Reset &index', 'call flogmenu#reset_mixed()'],
+                           \ ['← Reset --&hard', 'call flogmenu#reset_hard()'],
+                           \ ['⌘ &Navigate', 'call flogmenu#navigate()'],
+                           \ ['✓ Cherry&pick', 'call flogmenu#cherrypick()'],
+                           \ ['✗ Re&vert', 'call flogmenu#revert()'],
+                           \ ['ᛘ Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
+                           \ ['↷ &Rebase', 'call flogmenu#rebase_fromcache()'],
+                           \ ['↺ &Fixup', 'call flogmenu#fixup_fromcache()'],
+                           \ ['✒ &Amend', 'call flogmenu#amend_commit_fromcache()'],
+                           \ ['⊕ &SignifyThis', 'call flogmenu#signify_this()'],
                            \ ]
   let l:branches = len(g:flogmenu_normalmode_cursorinfo.local_branches) + len(g:flogmenu_normalmode_cursorinfo.remote_branches)
   if l:branches > 0
-    call add(l:flogmenu_main_menu, ['&Delete branch', 'call flogmenu#delete_branch_fromcache()'])
+    call add(l:flogmenu_main_menu, ['☠ &Delete branch', 'call flogmenu#delete_branch_fromcache()'])
   endif
   call flogmenu#open_menu(l:flogmenu_main_menu)
 endfunction
@@ -373,7 +391,7 @@ endfunction
 fu! flogmenu#search_visual_selection_diffs_fromcache() abort
   let l:youngest_commit = g:flogmenu_visual_selection_info['first']
   let l:oldest_commit = g:flogmenu_visual_selection_info['second']
-  call fzf#run(fzf#wrap({'source': 'git log --oneline -S -- '.shellescape('').' '.l:oldest_commit.'^..'.l:youngest_commit, 'sink': function('flogmenu#open_git_ref')}), 0)
+  call fzf#run(fzf#wrap({'source': 'git log --oneline -S -- '.shellescape('').' '.l:oldest_commit.'^..'.l:youngest_commit, 'sink': function('flogmenu#open_git_ref_file')}), 0)
 endfunction
 
 fu! flogmenu#search_visual_selection_fromcache() abort
@@ -396,8 +414,24 @@ endfunction
 
 " Signify other commits:
 fu! flogmenu#set_signify_target(target_commit) abort
+  let g:flogmenu_signify_target_commit = a:target_commit
   let g:signify_vcs_cmds['git'] = 'git diff --no-color --no-ext-diff -U0 ' . a:target_commit . ' -- %f'
-  echom 'Now diffing against ' . a:target_commit
+  let l:commit_summary = flogmenu#git('show --pretty="(%h) %s" --no-patch ' . a:target_commit)
+  echom 'Signify diffing against ' . a:target_commit . " " . l:commit_summary
+endfunction
+
+fu! flogmenu#set_signify_custom() abort
+  let l:input = input('> ')
+  execute 'redraw'
+  call flogmenu#set_signify_target(l:input)
+endfunction
+
+fu! flogmenu#set_signify_older() abort
+  call flogmenu#set_signify_target(g:flogmenu_signify_target_commit . '^')
+endfunction
+
+fu! flogmenu#set_signify_younger() abort
+  call flogmenu#set_signify_target(substitute(g:flogmenu_signify_target_commit, '\^$', '', ''))
 endfunction
 
 fu! flogmenu#signify_this() abort

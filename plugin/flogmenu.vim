@@ -29,7 +29,7 @@ let g:flogmenu_stashmenu = {'name': 'Git stash menu',
 " don't ask me why shellescape('') - it works
 command! -bang -nargs=* GitGrep
   \ call fzf#run(
-  \   fzf#wrap({'source': 'git grep --line-number -- '.shellescape('').' $(git rev-list --all)', 'sink': function('flogmenu#open_git_ref')}), <bang>0)
+  \   fzf#wrap({'source': 'git grep --line-number -- '.shellescape('').' $(git rev-list --all)', 'sink': function('flogmenu#open_git_ref_file')}), <bang>0)
 
 let g:flogmenu_gitmenu = {'name': 'Git Menu',
              \'a': ['call flogmenu#open_all_windows()', 'All windows'],
@@ -62,8 +62,12 @@ let g:flogmenu_opts = {'index':g:quickui#context#cursor}
 
 let g:flogmenu_normalmode_cursorinfo = {}
 let g:flogmenu_visual_selection_info = {}
+let g:flogmenu_signify_target_commit = 'HEAD'
 
 " Commands
-
 command! SignifyReset call flogmenu#set_signify_target('HEAD')
+command! SignifyCustom call flogmenu#set_signify_custom()
 
+" Older / younger
+command! SignifyOlder call flogmenu#set_signify_older()
+command! SignifyNewer call flogmenu#set_signify_younger()
