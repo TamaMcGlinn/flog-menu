@@ -90,7 +90,7 @@ endfunction
 " so the result needs to be stored for submenus to
 " access. The _fromcache functions are thus meant
 " for in menu options, while the version without
-" will call this first to set the global g:flogmenu_selection_info
+" will call this first to set the global g:flogmenu_normalmode_cursorinfo
 fu! flogmenu#set_selection_info() abort
   let l:commit = flog#get_commit_at_line()
   let g:flogmenu_normalmode_cursorinfo = flogmenu#get_refs(l:commit)
@@ -136,13 +136,13 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
     endif
   endif
   if a:switch_to_branch
-    call flogmenu#git('checkout -B ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
+    call flogmenu#git_then_update('checkout -B ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
     " TODO check if local branch of same name has commits not in this commit
   else
-    call flogmenu#git('branch ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
+    call flogmenu#git_then_update('branch ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
   endif
   if l:track_remote
-    let l:command = 'branch --set-upstream-to ' . l:remote . '/' . l:branch
+    let l:command = 'branch --set-upstream-to ' . l:branch . ' ' . l:remote . '/' . l:branch
     call flogmenu#git(l:command)
   endif
   call flog#populate_graph_buffer()
@@ -264,7 +264,7 @@ endfunction
 
 fu! flogmenu#delete_current_branch_fromcache() abort
   call flogmenu#git('checkout --detach')
-  call flogmenu#delete_other_branch_fromcache(g:flogmenu_normalmode_cursorinfo.current_branch)
+  call flogmenu#delete_specific_branch_fromcache(g:flogmenu_normalmode_cursorinfo.current_branch)
 endfunction
 
 fu! flogmenu#delete_current_branch() abort
