@@ -40,49 +40,22 @@ endfunction
 
 " Gets the references attached to the commit on the selected line
 fu! flogmenu#get_refs(commit) abort
-  if type(a:commit) != v:t_dict
+  let ref_types = flog#get_ref_types(a:commit)
+  if type(l:ref_types) != v:t_dict
     throw g:flogmenu_commit_parse_error
   endif
 
-  " TODO replace until next marker with this after flog PR#48 is approved
-  " TODO fix the bug in this flog code; local branches named remote/anything
-  " are considered as remote branches on the remote
-  " let [l:local_branches, l:remote_branches, l:tags, l:special] = flog#parse_ref_name_list(a:commit)
-  let l:local_branches = []
-  let l:remote_branches = []
-  let l:special = []
-  let l:tags = []
-  if !empty(a:commit.ref_name_list)
-    let l:refs = a:commit.ref_name_list
-    let l:original_refs = split(a:commit.ref_names_unwrapped, ' \ze-> \|, \|\zetag: ')
-    let l:i = 0
-    while l:i < len(l:refs)
-      let l:ref = l:refs[l:i]
-      if l:ref =~# 'HEAD$\|^refs/'
-        call add(l:special, l:ref)
-      elseif l:original_refs[l:i] =~# '^tag: '
-        call add(l:tags, l:ref)
-      elseif flog#is_remote_ref(l:ref)
-        call add(l:remote_branches, l:ref)
-      else
-        call add(l:local_branches, l:ref)
-      endif
-      let l:i += 1
-    endwhile
-  endif
-  " end TODO replacement
-
-  let l:unmatched_remote_branches = filter(copy(l:remote_branches), "index(l:local_branches, substitute(v:val, '^[^/]*/', '', '')) < 0")
+  let l:unmatched_remote_branches = filter(copy(l:ref_types.remote_branches), "index(l:ref_types.local_branches, substitute(v:val, '^[^/]*/', '', '')) < 0")
   let l:current_branch = flogmenu#git('rev-parse --abbrev-ref HEAD')
-  let l:other_local_branches = filter(copy(l:local_branches), 'l:current_branch != v:val')
+  let l:other_local_branches = filter(copy(l:ref_types.local_branches), 'l:current_branch != v:val')
   return {
      \ 'current_branch': l:current_branch,
-     \ 'local_branches': l:local_branches,
+     \ 'local_branches': l:ref_types.local_branches,
      \ 'other_local_branches': l:other_local_branches,
-     \ 'remote_branches': l:remote_branches,
+     \ 'remote_branches': l:ref_types.remote_branches,
      \ 'unmatched_remote_branches': l:unmatched_remote_branches,
-     \ 'tags': l:tags,
-     \ 'special': l:special
+     \ 'tags': l:ref_types.tags,
+     \ 'special': l:ref_types.special
      \ }
 endfunction
 
