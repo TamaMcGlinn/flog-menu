@@ -125,6 +125,10 @@ fu! flogmenu#is_remote(remotename) abort
   return v:shell_error == 0
 endfunction
 
+fu! flogmenu#force_checkout(branch, commit) abort
+  call flogmenu#git_then_update('checkout -B ' . a:branch . ' ' . a:commit)
+endfunction
+
 fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_branch) abort
   let l:branch = a:branchname
   let l:track_remote = v:false
@@ -136,13 +140,25 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
     endif
   endif
   if a:switch_to_branch
-    call flogmenu#git_then_update('checkout -B ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
-    " TODO check if local branch of same name has commits not in this commit
+    echo flogmenu#git_ignore_errors('merge-base --is-ancestor ' . l:branch . ' ' . l:remote . '/' . l:branch)
+    if v:shell_error
+      let l:discarding_commits = flogmenu#git("log --pretty=format:'%h %s' " . l:remote . '/' . l:branch . '..' . l:branch)
+      call inputsave()
+      let l:choice = input(l:branch . " contains changes that will be discarded by switching: \n" . l:discarding_commits . "\n> (a)bort / (d)iscard\n")
+      call inputrestore()
+      if l:choice ==# 'd'
+        call flogmenu#force_checkout(l:branch, g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
+      else " All invalid input also means abort
+        return 1
+      endif
+    else
+      call flogmenu#force_checkout(l:branch, g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
+    endif
   else
     call flogmenu#git_then_update('branch ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
   endif
   if l:track_remote
-    let l:command = 'branch --set-upstream-to ' . l:branch . ' ' . l:remote . '/' . l:branch
+    let l:command = 'branch --set-upstream-to ' . l:remote . '/' . l:branch
     call flogmenu#git(l:command)
   endif
   call flog#populate_graph_buffer()
@@ -176,8 +192,8 @@ fu! flogmenu#handle_unstaged_changes() abort
   call flogmenu#git_ignore_errors('diff-index --quiet HEAD --')
   let l:has_unstaged_changes = v:shell_error != 0
   if l:has_unstaged_changes
-    call inputsave()
     let l:unstaged_info = flogmenu#git('diff --stat')
+    call inputsave()
     let l:choice = input("Unstaged changes: \n" . l:unstaged_info . "\n> (a)bort / (d)iscard / (s)tash ")
     call inputrestore()
     if l:choice ==# 'd'
