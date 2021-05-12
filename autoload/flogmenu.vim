@@ -39,7 +39,7 @@ fu! flogmenu#git_then_update(command) abort
 endfunction
 
 " Gets the references attached to the commit on the selected line
-fu! flogmenu#get_refs(commit) abort
+fu! flogmenu#get_flog_refs(commit) abort
   if type(a:commit) != v:t_dict
     throw g:flogmenu_commit_parse_error
   endif
@@ -92,13 +92,33 @@ endfunction
 " for in menu options, while the version without
 " will call this first to set the global g:flogmenu_normalmode_cursorinfo
 fu! flogmenu#set_selection_info() abort
-  let l:commit = flog#get_commit_at_line()
-  let g:flogmenu_normalmode_cursorinfo = flogmenu#get_refs(l:commit)
+  if &filetype is# 'instaflog'
+    let l:commit = instaflog#get_commit_at_line()
+    let l:refs = flogmenu#get_instaflog_refs()
+  elseif &filetype is# 'floggraph'
+    let l:commit = flog#get_commit_at_line()
+    let l:refs = flogmenu#get_flog_refs()
+  else
+    throw 'Unsupported filetype ' . &filetype
+  endif
+  let g:flogmenu_normalmode_cursorinfo = l:refs
   let g:flogmenu_normalmode_cursorinfo['selected_commit'] = l:commit
   let l:current_commit = flogmenu#git('rev-parse HEAD')
-  let l:full_commit_hash = fugitive#RevParse(l:commit.short_commit_hash)
+  let l:full_commit_hash = flogmenu#git('rev-parse ' . l:commit.short_commit_hash)
   let g:flogmenu_normalmode_cursorinfo['selected_commit_hash'] = l:full_commit_hash
   let g:flogmenu_normalmode_cursorinfo['different_commit'] = l:current_commit != l:full_commit_hash
+endfunction
+
+fu! flogmenu#get_instaflog_refs() abort
+  return {
+     \ 'current_branch': '',
+     \ 'local_branches': [],
+     \ 'other_local_branches': [],
+     \ 'remote_branches': [],
+     \ 'unmatched_remote_branches': [],
+     \ 'tags': [],
+     \ 'special': []
+     \ }
 endfunction
 
 fu! flogmenu#set_visual_selection_info() abort
