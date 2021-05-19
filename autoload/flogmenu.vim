@@ -97,7 +97,7 @@ fu! flogmenu#set_selection_info() abort
     let l:refs = flogmenu#get_instaflog_refs()
   elseif &filetype is# 'floggraph'
     let l:commit = flog#get_commit_at_line()
-    let l:refs = flogmenu#get_flog_refs()
+    let l:refs = flogmenu#get_flog_refs(l:commit)
   else
     throw 'Unsupported filetype ' . &filetype
   endif
