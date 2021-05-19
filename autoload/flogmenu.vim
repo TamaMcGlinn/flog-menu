@@ -252,7 +252,7 @@ fu! flogmenu#checkout_fromcache() abort
   endfor
   " Finally, choices to make new branch or none at all
   call add(l:branch_menu, ['-create branch', 'call flogmenu#create_branch_menu_fromcache()'])
-  call add(l:branch_menu, ['-detached HEAD', 'call flogmenu#git_then_update("checkout " . g:flogmenu_selection_info.selected_commit_hash)'])
+  call add(l:branch_menu, ['-detached HEAD', 'call flogmenu#git_then_update("checkout " . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)'])
   call flogmenu#open_menu(l:branch_menu)
 endfunction
 
