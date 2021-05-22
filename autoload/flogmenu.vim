@@ -404,9 +404,9 @@ fu! flogmenu#open_main_contextmenu() abort
   " this ensures that set_selection_info is called once, even if
   " the user traverses several menu's
   let l:flogmenu_main_menu = [
-                           \ ['↯  &Checkout', 'call flogmenu#checkout_fromcache()'],
+                           \ ['↯  Checkout', 'call flogmenu#checkout_fromcache()'],
                            \ ['-'],
-                           \ ['ᛘ  Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
+                           \ ['ᛘ  &Branch', 'call flogmenu#create_branch_menu_fromcache()'],
                            \ ['ᛦ  &Merge', 'call flogmenu#merge_fromcache()'],
                            \ ['-'],
                            \ ['⇠  Reset &index', 'call flogmenu#reset_mixed()'],
@@ -419,7 +419,7 @@ fu! flogmenu#open_main_contextmenu() abort
                            \ ['↺  &Fixup', 'call flogmenu#fixup_fromcache()'],
                            \ ['✒  &Amend', 'call flogmenu#amend_commit_fromcache()'],
                            \ ['-'],
-                           \ ['⇄  C&ompare', 'call flogmenu#compare()'],
+                           \ ['⇄  &Compare', 'call flogmenu#compare()'],
                            \ ['⌘  Bro&wse', 'call flog#run_command("GBrowse %(h)")'],
                            \ ]
   let l:branches = len(g:flogmenu_normalmode_cursorinfo.local_branches) + len(g:flogmenu_normalmode_cursorinfo.remote_branches)
