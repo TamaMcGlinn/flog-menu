@@ -209,6 +209,13 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
   endif
   if a:switch_to_branch
     let l:commit = g:flogmenu_normalmode_cursorinfo.selected_commit_hash
+    " if the branch doesn't exist yet we can proceed
+    call flogmenu#git_ignore_errors('rev-parse --quiet --verify ' . l:branch)
+    if v:shell_error
+      call flogmenu#force_checkout(l:branch, l:commit)
+    endif
+
+    " check what is discarded if we move branch
     let l:discarding_commits = flogmenu#get_changes_discarded_by_switching_and_moving_branch(l:branch, l:remote, l:commit)
     if len(l:discarding_commits) > 0
       call inputsave()
