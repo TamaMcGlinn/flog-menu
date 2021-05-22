@@ -55,8 +55,8 @@ let g:flogmenu_gitmenu = {'name': 'Git Menu',
              \'/': [':GitGrep', 'Search'],
              \}
 
-" set cursor to the last position
-let g:flogmenu_opts = {'index':g:quickui#context#cursor}
+" set cursor to the first item
+let g:flogmenu_opts = {'index': 0}
 
 " Global variables
 
