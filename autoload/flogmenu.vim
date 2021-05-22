@@ -392,13 +392,11 @@ fu! flogmenu#delete_branch_fromcache() abort
   for l:remote_branch in g:flogmenu_normalmode_cursorinfo.remote_branches
     call add(l:branch_menu, [l:remote_branch, 'call flogmenu#delete_remote_branch("' . l:remote_branch . '")'])
   endfor
-  " TODO remote branches
   call flogmenu#open_menu(l:branch_menu)
 endfunction
 
 fu! flogmenu#fixup_fromcache() abort
-  " TODO if no staged changes, ask whether to stage all
-  execute 'Git commit --fixup=' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash
+  execute 'Git commit -a --fixup=' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash
 endfunction
 
 fu! flogmenu#fixup() abort
