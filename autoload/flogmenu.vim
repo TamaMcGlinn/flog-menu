@@ -38,6 +38,19 @@ fu! flogmenu#git_then_update(command) abort
   return l:git_output
 endfunction
 
+" When your pwd is outside of the repo, you need this
+" to run commands like diff, which look at the worktree
+fu! flogmenu#git_worktree_command(command) abort
+  " still works if you have a bare repo with several worktrees checked out
+  let l:worktree_dir = systemlist('cd ' . expand('%:p:h') . ' && git rev-parse --show-toplevel')[0]
+  " Get the modified files in a list
+  let l:output = systemlist(fugitive#repo().git_command() . ' --work-tree ' . l:worktree_dir . ' ' . a:command)
+  if v:shell_error
+    throw 'git ' . a:command . ' failed with: ' . l:output
+  endif
+  return l:output
+endfunction
+
 " Gets the references attached to the commit on the selected line
 fu! flogmenu#get_flog_refs(commit) abort
   if type(a:commit) != v:t_dict
@@ -364,10 +377,6 @@ fu! flogmenu#amend_commit() abort
   call flogmenu#amend_commit_fromcache()
 endfunction
 
-fu! flogmenu#navigate() abort
-  echom "TODO add navigation commands"
-endfunction
-
 " I keep all the menu options in here to ensure that I don't double bind
 " something; the dictionary will fail immediately then
 let g:flogmenu_unused_dict = {'j': 'up',
@@ -395,21 +404,27 @@ fu! flogmenu#open_main_contextmenu() abort
   " this ensures that set_selection_info is called once, even if
   " the user traverses several menu's
   let l:flogmenu_main_menu = [
-                           \ ['↯ &Checkout', 'call flogmenu#checkout_fromcache()'],
-                           \ ['ᛦ &Merge', 'call flogmenu#merge_fromcache()'],
-                           \ ['⇠ Reset &index', 'call flogmenu#reset_mixed()'],
-                           \ ['← Reset --&hard', 'call flogmenu#reset_hard()'],
-                           \ ['⌘ &Navigate', 'call flogmenu#navigate()'],
-                           \ ['✓ Cherry&pick', 'call flogmenu#cherrypick()'],
-                           \ ['✗ Re&vert', 'call flogmenu#revert()'],
-                           \ ['ᛘ Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
-                           \ ['↷ &Rebase', 'call flogmenu#rebase_fromcache()'],
-                           \ ['↺ &Fixup', 'call flogmenu#fixup_fromcache()'],
-                           \ ['✒ &Amend', 'call flogmenu#amend_commit_fromcache()'],
-                           \ ['⊕ &SignifyThis', 'call flogmenu#signify_this()'],
+                           \ ['↯  &Checkout', 'call flogmenu#checkout_fromcache()'],
+                           \ ['-'],
+                           \ ['ᛘ  Create &branch', 'call flogmenu#create_branch_menu_fromcache()'],
+                           \ ['ᛦ  &Merge', 'call flogmenu#merge_fromcache()'],
+                           \ ['-'],
+                           \ ['⇠  Reset &index', 'call flogmenu#reset_mixed()'],
+                           \ ['←  Reset --&hard', 'call flogmenu#reset_hard()'],
+                           \ ['-'],
+                           \ ['✓  Cherry&pick', 'call flogmenu#cherrypick()'],
+                           \ ['✗  Re&vert', 'call flogmenu#revert()'],
+                           \ ['-'],
+                           \ ['↷  &Rebase', 'call flogmenu#rebase_fromcache()'],
+                           \ ['↺  &Fixup', 'call flogmenu#fixup_fromcache()'],
+                           \ ['✒  &Amend', 'call flogmenu#amend_commit_fromcache()'],
+                           \ ['-'],
+                           \ ['⇄  C&ompare', 'call flogmenu#compare()'],
+                           \ ['⌘  Bro&wse', 'call flog#run_command("GBrowse %(h)")'],
                            \ ]
   let l:branches = len(g:flogmenu_normalmode_cursorinfo.local_branches) + len(g:flogmenu_normalmode_cursorinfo.remote_branches)
   if l:branches > 0
+    call add(l:flogmenu_main_menu, ['-'])
     call add(l:flogmenu_main_menu, ['☠ &Delete branch', 'call flogmenu#delete_branch_fromcache()'])
   endif
   call flogmenu#open_menu(l:flogmenu_main_menu)
@@ -452,7 +467,7 @@ endfunction
 fu! flogmenu#set_signify_target(target_commit) abort
   let g:flogmenu_signify_target_commit = a:target_commit
   let g:signify_vcs_cmds['git'] = 'git diff --no-color --no-ext-diff -U0 ' . a:target_commit . ' -- %f'
-  let l:commit_summary = flogmenu#git('show --pretty="(%h) %s" --no-patch ' . a:target_commit)
+  let l:commit_summary = flogmenu#git_worktree_command('show --pretty="(%h) %s" --no-patch ' . a:target_commit)[0]
   echom 'Signify diffing against ' . a:target_commit . " " . l:commit_summary
 endfunction
 
@@ -472,6 +487,51 @@ endfunction
 
 fu! flogmenu#signify_this() abort
   call flogmenu#set_signify_target(g:flogmenu_normalmode_cursorinfo['selected_commit_hash'])
+endfunction
+
+fu! flogmenu#get_first_line_nr_that_differs(commit, file) abort
+  let l:git_command = 'diff --unified=0 ' . a:commit . ' -- ' . a:file
+  let l:diff = flogmenu#git_worktree_command(l:git_command)
+
+  for l:line in [4, 5]
+    let l:lines_changed = l:diff[l:line]
+    let l:regex = '@@ -\?[^ ]* +\?\([0-9]*\),\?[0-9]* @@.*'
+    let l:matches = matchlist(l:lines_changed, l:regex)
+    if len(l:matches) > 1
+      return max([1, l:matches[1]])
+    endif
+  endfor
+  if len(l:matches) == 0
+    echom 'Warning: flogmenu#get_first_line_nr_that_differs failed to get line number for diff'
+    " for l:diff_line in l:diff
+    "   echom l:diff_line
+    " endfor
+    return 1
+  endif
+endfunction
+
+fu! flogmenu#quickfix_diffs(commit) abort
+    let l:files = flogmenu#git_worktree_command('diff --name-only ' . a:commit)
+
+    " Create the dictionaries used to populate the quickfix list
+    let l:list = []
+    for l:file in l:files
+        let l:line = flogmenu#get_first_line_nr_that_differs(a:commit, l:file)
+        let l:dic = {'filename': l:file, "lnum": l:line}
+        call add(l:list, l:dic)
+    endfor
+
+    " Populate the quickfix list
+    call setqflist(l:list)
+endfunction
+
+fu! flogmenu#compare() abort
+  let l:commit = g:flogmenu_normalmode_cursorinfo['selected_commit_hash']
+
+  " TODO check if signify is installed first
+  call flogmenu#set_signify_target(l:commit)
+
+  call flogmenu#quickfix_diffs(l:commit)
 endfunction
 
 " The following functions have nothing to do with flog
