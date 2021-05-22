@@ -527,9 +527,14 @@ endfunction
 
 fu! flogmenu#compare() abort
   let l:commit = g:flogmenu_normalmode_cursorinfo['selected_commit_hash']
+  let l:commit_summary = flogmenu#git_worktree_command('show --pretty="(%h) %s" --no-patch ' . l:commit)[0]
+  echom "Comparing to " . l:commit_summary
 
-  " TODO check if signify is installed first
-  call flogmenu#set_signify_target(l:commit)
+  try
+    call flogmenu#set_signify_target(l:commit)
+  catch
+    echom "Note: install mhinz/vim-signify to have matching git gutter"
+  endtry
 
   call flogmenu#quickfix_diffs(l:commit)
 endfunction
