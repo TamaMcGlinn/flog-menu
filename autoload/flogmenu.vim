@@ -162,9 +162,44 @@ fu! flogmenu#force_checkout(branch, commit) abort
   call flogmenu#git_then_update('checkout -B ' . a:branch . ' ' . a:commit)
 endfunction
 
+" Check if we can safely move branch to point at commit; returns an empty list
+" if and only if, either:
+"  - commit contains branch (fast-forwarding), or
+"  - remote/branch contains branch (server still has a copy)
+" otherwise, returns a list of one-line commit summaries
+" for each commit
+"   which is in branch but is neither in commit, nor in origin/branch
+fu! flogmenu#get_changes_discarded_by_switching_and_moving_branch(branch, remote, commit) abort
+  " Check if branch currently points at some ancestor of the target, which
+  " means we're just updating the branch which is always fine
+  call flogmenu#git_ignore_errors('merge-base --is-ancestor ' . a:branch . ' ' . a:commit)
+  if !v:shell_error
+    return []
+  endif
+
+  let l:common_base = flogmenu#git('merge-base ' . a:commit . ' ' . a:branch)
+  " Check if the remote contains the changes, in which case
+  " we are also not throwing away any changes
+  if a:remote !=# ''
+    call flogmenu#git_ignore_errors('merge-base --is-ancestor ' . a:branch . ' ' . a:remote . '/' . a:branch)
+    if !v:shell_error
+      return []
+    endif
+    let l:remote_branch_base = flogmenu#git('merge-base ' . a:remote . '/' . a:branch . ' ' . a:branch)
+    " Check if the remote-branch base contains all that is in
+    " the base between the commit and the branch, in which case we replace it
+    call flogmenu#git_ignore_errors('merge-base --is-ancestor ' . l:common_base . ' ' . l:remote_branch_base)
+    if !v:shell_error
+      let l:common_base = l:remote_branch_base
+    endif
+  endif
+  return systemlist("git log --pretty=format:'%h %s' " . l:common_base . '..' . a:branch)
+endfunction
+
 fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_branch) abort
   let l:branch = a:branchname
   let l:track_remote = v:false
+  let l:remote = ''
   if a:branchname =~# '.*/.*'
     let l:remote = substitute(a:branchname, '/.*', '', '')
     if flogmenu#is_remote(l:remote)
@@ -173,14 +208,18 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
     endif
   endif
   if a:switch_to_branch
-    echo flogmenu#git_ignore_errors('merge-base --is-ancestor ' . l:branch . ' ' . l:remote . '/' . l:branch)
-    if v:shell_error
-      let l:discarding_commits = flogmenu#git("log --pretty=format:'%h %s' " . l:remote . '/' . l:branch . '..' . l:branch)
+    let l:commit = g:flogmenu_normalmode_cursorinfo.selected_commit_hash
+    let l:discarding_commits = flogmenu#get_changes_discarded_by_switching_and_moving_branch(l:branch, l:remote, l:commit)
+    if len(l:discarding_commits) > 0
       call inputsave()
-      let l:choice = input(l:branch . " contains changes that will be discarded by switching: \n" . l:discarding_commits . "\n> (a)bort / (d)iscard\n")
+      echom l:branch . " contains changes that will be discarded by switching:"
+      for l:commit in l:discarding_commits
+        echom l:commit
+      endfor
+      let l:choice = input("> (a)bort / (d)iscard\n")
       call inputrestore()
       if l:choice ==# 'd'
-        call flogmenu#force_checkout(l:branch, g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
+        call flogmenu#force_checkout(l:branch, l:commit)
       else " All invalid input also means abort
         return 1
       endif
