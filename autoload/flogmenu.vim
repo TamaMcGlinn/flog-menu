@@ -160,7 +160,7 @@ fu! flogmenu#is_remote(remotename) abort
 endfunction
 
 fu! flogmenu#force_checkout(branch, commit) abort
-  call flogmenu#git_then_update('checkout -B ' . a:branch . ' ' . a:commit)
+  call flogmenu#git('checkout -B ' . a:branch . ' ' . a:commit)
 endfunction
 
 " Check if we can safely move branch to point at commit; returns an empty list
@@ -241,7 +241,8 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
     call flogmenu#git_then_update('branch ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
   endif
   if l:track_remote
-    let l:command = 'branch --set-upstream-to ' . l:remote . '/' . l:branch
+    let l:command = 'branch --set-upstream-to ' . l:remote . '/' . l:branch . ' ' . l:branch
+    echom l:command
     call flogmenu#git(l:command)
   endif
   call flog#populate_graph_buffer()
