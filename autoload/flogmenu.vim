@@ -171,6 +171,7 @@ endfunction
 " for each commit
 "   which is in branch but is neither in commit, nor in origin/branch
 fu! flogmenu#get_changes_discarded_by_switching_and_moving_branch(branch, remote, commit) abort
+  " echo "Checking " . a:branch . " at remote " . a:remote . " compared to commit " . a:commit
   " Check if branch currently points at some ancestor of the target, which
   " means we're just updating the branch which is always fine
   call flogmenu#git_ignore_errors('merge-base --is-ancestor ' . a:branch . ' ' . a:commit)
@@ -206,6 +207,8 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
     if flogmenu#is_remote(l:remote)
       let l:track_remote = v:true
       let l:branch = substitute(a:branchname, '^[^/]*/', '', '')
+    else
+      let l:remote = ''
     endif
   endif
   if a:switch_to_branch
@@ -214,25 +217,25 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
     call flogmenu#git_ignore_errors('rev-parse --quiet --verify ' . l:branch)
     if v:shell_error
       call flogmenu#force_checkout(l:branch, l:commit)
-    endif
-
-    " check what is discarded if we move branch
-    let l:discarding_commits = flogmenu#get_changes_discarded_by_switching_and_moving_branch(l:branch, l:remote, l:commit)
-    if len(l:discarding_commits) > 0
-      call inputsave()
-      echom l:branch . " contains changes that will be discarded by switching:"
-      for l:commit in l:discarding_commits
-        echom l:commit
-      endfor
-      let l:choice = input("> (a)bort / (d)iscard\n")
-      call inputrestore()
-      if l:choice ==# 'd'
-        call flogmenu#force_checkout(l:branch, l:commit)
-      else " All invalid input also means abort
-        return 1
-      endif
     else
-      call flogmenu#force_checkout(l:branch, g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
+      " check what is discarded if we move branch
+      let l:discarding_commits = flogmenu#get_changes_discarded_by_switching_and_moving_branch(l:branch, l:remote, l:commit)
+      if len(l:discarding_commits) > 0
+        call inputsave()
+        echom l:branch . " contains changes that will be discarded by switching:"
+        for l:discarded_commit in l:discarding_commits
+          echom l:discarded_commit
+        endfor
+        let l:choice = input("> (a)bort / (d)iscard\n")
+        call inputrestore()
+        if l:choice ==# 'd'
+          call flogmenu#force_checkout(l:branch, l:commit)
+        else " All invalid input also means abort
+          return 1
+        endif
+      else
+        call flogmenu#force_checkout(l:branch, g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
+      endif
     endif
   else
     call flogmenu#git_then_update('branch ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
