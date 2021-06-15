@@ -44,7 +44,8 @@ fu! flogmenu#git_worktree_command(command) abort
   " still works if you have a bare repo with several worktrees checked out
   let l:worktree_dir = systemlist('cd ' . expand('%:p:h') . ' && git rev-parse --show-toplevel')[0]
   " Get the modified files in a list
-  let l:output = systemlist(fugitive#repo().git_command() . ' --work-tree ' . l:worktree_dir . ' ' . a:command)
+  let l:full_command = fugitive#repo().git_command() . ' --work-tree ' . l:worktree_dir . ' ' . a:command
+  let l:output = systemlist(l:full_command)
   if v:shell_error
     throw 'git ' . a:command . ' failed with: ' . l:output
   endif
@@ -477,10 +478,19 @@ endfunction
 fu! flogmenu#open_visual_contextmenu() abort
   call flogmenu#set_visual_selection_info()
   let l:flogmenu_visual_menu = [
-                           \ ['&Search diffs', 'call flogmenu#search_visual_selection_diffs_fromcache()'],
-                           \ ['Search file &contents', 'call flogmenu#search_visual_selection_fromcache()'],
+                           \ ['🔍 &Search diffs', 'call flogmenu#search_visual_selection_diffs_fromcache()'],
+                           \ ['🗂  Search &file contents', 'call flogmenu#search_visual_selection_fromcache()'],
+                           \ ['⇊  Jump to common &parent', 'call flogmenu#jump_to_mergebase()'],
                            \ ]
   call flogmenu#open_menu(l:flogmenu_visual_menu)
+endfunction
+
+fu! flogmenu#jump_to_mergebase() abort
+  let l:one = g:flogmenu_visual_selection_info['first']
+  let l:two = g:flogmenu_visual_selection_info['second']
+  let l:mergebase = flogmenu#git('merge-base '.l:one.' '.l:two)
+  echo l:mergebase
+  execute ':Flogjump '.l:mergebase
 endfunction
 
 fu! flogmenu#search_visual_selection_diffs_fromcache() abort
@@ -521,12 +531,28 @@ fu! flogmenu#set_signify_custom() abort
   call flogmenu#set_signify_target(l:input)
 endfunction
 
+fu! flogmenu#get_older_signify_commit() abort
+  return g:flogmenu_signify_target_commit . '^'
+endfunction
+
+fu! flogmenu#get_younger_signify_commit() abort
+  return substitute(g:flogmenu_signify_target_commit, '\^$', '', '')
+endfunction
+
 fu! flogmenu#set_signify_older() abort
-  call flogmenu#set_signify_target(g:flogmenu_signify_target_commit . '^')
+  call flogmenu#set_signify_target(flogmenu#get_older_signify_commit())
 endfunction
 
 fu! flogmenu#set_signify_younger() abort
-  call flogmenu#set_signify_target(substitute(g:flogmenu_signify_target_commit, '\^$', '', ''))
+  call flogmenu#set_signify_target(flogmenu#get_younger_signify_commit())
+endfunction
+
+fu! flogmenu#compare_older() abort 
+  call flogmenu#compare_to(flogmenu#get_older_signify_commit())
+endfunction
+
+fu! flogmenu#compare_younger() abort 
+  call flogmenu#compare_to(flogmenu#get_younger_signify_commit())
 endfunction
 
 fu! flogmenu#signify_this() abort
@@ -556,6 +582,8 @@ endfunction
 
 fu! flogmenu#quickfix_diffs(commit) abort
     let l:files = flogmenu#git_worktree_command('diff --name-only ' . a:commit)
+    " TODO relativize the files to the pwd; they are from the git root
+    " hence this doesn't work when your pwd is deeper inside the git repo
 
     " Create the dictionaries used to populate the quickfix list
     let l:list = []
@@ -571,16 +599,20 @@ endfunction
 
 fu! flogmenu#compare() abort
   let l:commit = g:flogmenu_normalmode_cursorinfo['selected_commit_hash']
-  let l:commit_summary = flogmenu#git_worktree_command('show --pretty="(%h) %s" --no-patch ' . l:commit)[0]
+  call flogmenu#compare_to(l:commit)
+endfunction
+
+fu! flogmenu#compare_to(commit) abort
+  let l:commit_summary = flogmenu#git_worktree_command('show --pretty="(%h) %s" --no-patch ' . a:commit)[0]
   echom "Comparing to " . l:commit_summary
 
   try
-    call flogmenu#set_signify_target(l:commit)
+    call flogmenu#set_signify_target(a:commit)
   catch
     echom "Note: install mhinz/vim-signify to have matching git gutter"
   endtry
 
-  call flogmenu#quickfix_diffs(l:commit)
+  call flogmenu#quickfix_diffs(a:commit)
 endfunction
 
 " The following functions have nothing to do with flog

@@ -71,3 +71,6 @@ command! SignifyCustom call flogmenu#set_signify_custom()
 " Older / younger
 command! SignifyOlder call flogmenu#set_signify_older()
 command! SignifyNewer call flogmenu#set_signify_younger()
+
+command! CompareOlder call flogmenu#compare_older()
+command! CompareNewer call flogmenu#compare_younger()
