@@ -154,9 +154,14 @@ fu! flogmenu#create_given_branch_fromcache(branchname) abort
 endfunction
 
 fu! flogmenu#is_remote(remotename) abort
-  " TODO replace grep with vimscript direct search of remote -v output
-  call flogmenu#git_ignore_errors('remote -v | (while read line; do echo $line | { read first rest; echo $first; }; done) | grep "^' . a:remotename . '$"')
-  return v:shell_error == 0
+  let l:remote_v_output = split(flogmenu#git('remote -v'), '\n')
+  for l:line in l:remote_v_output
+    let l:remote_name = split(l:line)[0]
+    if l:remote_name == a:remotename
+      return v:true
+    endif
+  endfor
+  return v:false
 endfunction
 
 fu! flogmenu#force_checkout(branch, commit) abort
