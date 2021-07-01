@@ -247,7 +247,6 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
   endif
   if l:track_remote
     let l:command = 'branch --set-upstream-to ' . l:remote . '/' . l:branch . ' ' . l:branch
-    echom l:command
     call flogmenu#git(l:command)
   endif
   call flog#populate_graph_buffer()
