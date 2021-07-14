@@ -399,15 +399,15 @@ endfunction
 
 fu! flogmenu#delete_branch_fromcache() abort
   let l:branch_menu = []
-  if index(g:flogmenu_normalmode_cursorinfo.local_branches, g:flogmenu_normalmode_cursorinfo.current_branch) != -1
-    call add(l:branch_menu, [g:flogmenu_normalmode_cursorinfo.current_branch, 'call flogmenu#delete_current_branch_fromcache()'])
-  endif
   for l:local_branch in g:flogmenu_normalmode_cursorinfo.other_local_branches
     call add(l:branch_menu, [l:local_branch, 'call flogmenu#delete_other_branch_fromcache("' . l:local_branch . '")'])
   endfor
   for l:remote_branch in g:flogmenu_normalmode_cursorinfo.remote_branches
     call add(l:branch_menu, [l:remote_branch, 'call flogmenu#delete_remote_branch("' . l:remote_branch . '")'])
   endfor
+  if index(g:flogmenu_normalmode_cursorinfo.local_branches, g:flogmenu_normalmode_cursorinfo.current_branch) != -1
+    call add(l:branch_menu, [g:flogmenu_normalmode_cursorinfo.current_branch, 'call flogmenu#delete_current_branch_fromcache()'])
+  endif
   call flogmenu#open_menu(l:branch_menu)
 endfunction
 
