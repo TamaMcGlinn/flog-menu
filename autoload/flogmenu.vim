@@ -430,6 +430,19 @@ fu! flogmenu#amend_commit() abort
   call flogmenu#amend_commit_fromcache()
 endfunction
 
+fu! flogmenu#stat() abort
+  call flogmenu#set_selection_info()
+  call flogmenu#stat_fromcache()
+endfunction
+
+fu! flogmenu#stat_fromcache() abort
+  let l:full_stat = split(flogmenu#git('show --stat --oneline'), '\n')
+  let l:contents = l:full_stat[1:len(l:full_stat)-2]
+  for l:line in l:contents
+    echom l:line
+  endfor
+endfunction
+
 " I keep all the menu options in here to ensure that I don't double bind
 " something; the dictionary will fail immediately then
 let g:flogmenu_unused_dict = {'j': 'up',
@@ -472,6 +485,7 @@ fu! flogmenu#open_main_contextmenu() abort
                            \ ['↺  &Fixup', 'call flogmenu#fixup_fromcache()'],
                            \ ['✒  &Amend', 'call flogmenu#amend_commit_fromcache()'],
                            \ ['-'],
+                           \ ['ⅈ  &Stat', 'call flogmenu#stat_fromcache()'],
                            \ ['⇄  &Compare', 'call flogmenu#compare()'],
                            \ ['⌘  Bro&wse', 'call flog#run_command("GBrowse %(h)")'],
                            \ ]
