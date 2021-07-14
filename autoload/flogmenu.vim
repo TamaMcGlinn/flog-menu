@@ -25,6 +25,7 @@ fu! flogmenu#git_ignore_errors(command) abort
 endfunction
 
 fu! flogmenu#git(command) abort
+  " TODO make this work when the cwd is elsewhere
   let l:output = flogmenu#git_ignore_errors(a:command)
   if v:shell_error
     throw 'git ' . a:command . ' failed with: ' . l:output
