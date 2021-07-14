@@ -369,12 +369,12 @@ endfunction
 
 fu! flogmenu#delete_current_branch_fromcache() abort
   call flogmenu#git('checkout --detach')
-  call flogmenu#delete_specific_branch_fromcache(g:flogmenu_normalmode_cursorinfo.current_branch)
+  call flogmenu#git_then_update('branch -D ' . g:flogmenu_normalmode_cursorinfo.current_branch)
 endfunction
 
 fu! flogmenu#delete_current_branch() abort
   call flogmenu#set_selection_info()
-  call flogmenu#delete_branch_fromcache()
+  call flogmenu#delete_current_branch_fromcache()
 endfunction
 
 fu! flogmenu#delete_other_branch_fromcache(branch) abort
@@ -410,6 +410,11 @@ fu! flogmenu#delete_branch_fromcache() abort
     call add(l:branch_menu, [g:flogmenu_normalmode_cursorinfo.current_branch, 'call flogmenu#delete_current_branch_fromcache()'])
   endif
   call flogmenu#open_menu(l:branch_menu)
+endfunction
+
+fu! flogmenu#delete_branch() abort
+  call flogmenu#set_selection_info()
+  call flogmenu#delete_branch_fromcache()
 endfunction
 
 fu! flogmenu#fixup_fromcache() abort
@@ -583,6 +588,7 @@ fu! flogmenu#signify_this() abort
 endfunction
 
 fu! flogmenu#get_first_line_nr_that_differs(commit, file) abort
+  " TODO make this work when not at git root dir
   let l:git_command = 'diff --unified=0 ' . a:commit . ' -- ' . a:file
   let l:diff = flogmenu#git_worktree_command(l:git_command)
 
