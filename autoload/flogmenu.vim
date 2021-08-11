@@ -358,7 +358,7 @@ fu! flogmenu#merge_fromcache() abort
   endif
   let l:merge_choices = []
   for l:local_branch in g:flogmenu_normalmode_cursorinfo.other_local_branches + g:flogmenu_normalmode_cursorinfo.unmatched_remote_branches
-    call add(l:merge_choices, [l:local_branch, 'call flog#run_command("Git merge ' . l:local_branch . '", 0, 1)'])
+    call add(l:merge_choices, [l:local_branch, 'call flog#run_command("Git merge --no-ff ' . l:local_branch . '", 0, 1)'])
   endfor
   if len(l:merge_choices) == 1
     execute l:merge_choices[0][1]
