@@ -147,10 +147,15 @@ fu! flogmenu#create_branch_menu() abort
   call flogmenu#create_branch_menu_fromcache()
 endfunction
 
-fu! flogmenu#create_given_branch_fromcache(branchname) abort
+fu! flogmenu#input(message) abort
   call inputsave()
-  let l:wants_to_switch = input('Switch to the branch? (y)es / (n)o ')
+  let l:result = input(a:message)
   call inputrestore()
+  return l:result
+endfunction
+
+fu! flogmenu#create_given_branch_fromcache(branchname) abort
+  let l:wants_to_switch = flogmenu#input('Switch to the branch? (y)es / (n)o ')
   call flogmenu#create_given_branch_and_switch_fromcache(a:branchname, l:wants_to_switch ==# 'y')
 endfunction
 
@@ -227,13 +232,11 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
       " check what is discarded if we move branch
       let l:discarding_commits = flogmenu#get_changes_discarded_by_switching_and_moving_branch(l:branch, l:remote, l:commit)
       if len(l:discarding_commits) > 0
-        call inputsave()
         echom l:branch . " contains changes that will be discarded by switching:"
         for l:discarded_commit in l:discarding_commits
           echom l:discarded_commit
         endfor
-        let l:choice = input("> (a)bort / (d)iscard\n")
-        call inputrestore()
+        let l:choice = flogmenu#input("> (a)bort / (d)iscard\n")
         if l:choice ==# 'd'
           call flogmenu#force_checkout(l:branch, l:commit)
         else " All invalid input also means abort
@@ -254,9 +257,7 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
 endfunction
 
 fu! flogmenu#create_input_branch_fromcache() abort
-  call inputsave()
-  let l:branchname = input('Branch: ')
-  call inputrestore()
+  let l:branchname = flogmenu#input('Branch: ')
   call flogmenu#create_given_branch_fromcache(l:branchname)
 endfunction
 
@@ -275,6 +276,16 @@ fu! flogmenu#create_branch_menu() abort
   call flogmenu#create_branch_menu_fromcache()
 endfunction
 
+fu! flogmenu#rename_branch_fromcache() abort
+  let l:new_branch_name = flogmenu#input('New branch name: ')
+  call flogmenu#git_then_update('branch -m ' . l:new_branch_name)
+endfunction
+
+fu! flogmenu#rename_branch() abort
+  call flogmenu#set_selection_info()
+  call flogmenu#rename_branch_fromcache()
+endfunction
+
 " Returns 1 if the user chose to abort, otherwise 0
 fu! flogmenu#handle_unstaged_changes() abort
   call flogmenu#git_ignore_errors('update-index --refresh')
@@ -282,9 +293,7 @@ fu! flogmenu#handle_unstaged_changes() abort
   let l:has_unstaged_changes = v:shell_error != 0
   if l:has_unstaged_changes
     let l:unstaged_info = flogmenu#git('diff --stat')
-    call inputsave()
-    let l:choice = input("Unstaged changes: \n" . l:unstaged_info . "\n> (a)bort / (d)iscard / (s)tash ")
-    call inputrestore()
+    let l:choice = flogmenu#input("Unstaged changes: \n" . l:unstaged_info . "\n> (a)bort / (d)iscard / (s)tash ")
     if l:choice ==# 'd'
       call system('git checkout -- .') " TODO this doesn't work - need to throw away unstaged changes
     elseif l:choice ==# 's'
@@ -384,9 +393,7 @@ fu! flogmenu#delete_other_branch_fromcache(branch) abort
   endif
   call flogmenu#git('branch -D "' . a:branch . '"')
   if l:remote_tracking_branch != v:null
-    call inputsave()
-    let l:delete_remote = input('Delete remote branch ' . l:remote_tracking_branch . ' as well? (y)es / (n)o ')
-    call inputrestore()
+    let l:delete_remote = flogmenu#input('Delete remote branch ' . l:remote_tracking_branch . ' as well? (y)es / (n)o ')
     if l:delete_remote ==# 'y'
       call flogmenu#delete_remote_branch(l:remote_tracking_branch)
     endif
@@ -451,22 +458,21 @@ endfunction
 
 " I keep all the menu options in here to ensure that I don't double bind
 " something; the dictionary will fail immediately then
-let g:flogmenu_unused_dict = {'j': 'up',
-                    \'k': 'down',
-                    \'c': 'checkout',
+let g:flogmenu_unused_dict = {'j': 'down',
+                    \'k': 'up',
                     \'m': 'merge',
                     \'i': 'index',
                     \'h': 'hard',
-                    \'n': 'navigate',
+                    \'n': 'rename',
                     \'p': 'cherrypick',
                     \'v': 'revert',
                     \'b': 'branch',
                     \'r': 'rebase',
                     \'f': 'fixup',
                     \'a': 'amend',
-                    \'s': 'signify',
-                    \'u': 'p&ush',
-                    \'U': 'force p&Ush',
+                    \'s': 'stat',
+                    \'c': 'compare',
+                    \'w': 'browse',
                     \'d': 'delete'}
 
 fu! flogmenu#open_main_contextmenu() abort
@@ -479,6 +485,7 @@ fu! flogmenu#open_main_contextmenu() abort
                            \ ['↯  Checkout', 'call flogmenu#checkout_fromcache()'],
                            \ ['-'],
                            \ ['ᛘ  &Branch', 'call flogmenu#create_branch_menu_fromcache()'],
+                           \ ['𝀝  Re&name branch', 'call flogmenu#rename_branch_fromcache()'],
                            \ ['ᛦ  &Merge', 'call flogmenu#merge_fromcache()'],
                            \ ['-'],
                            \ ['⇠  Reset &index', 'call flogmenu#reset_mixed()'],
@@ -493,7 +500,7 @@ fu! flogmenu#open_main_contextmenu() abort
                            \ ['-'],
                            \ ['ⅈ  &Stat', 'call flogmenu#stat_fromcache()'],
                            \ ['⇄  &Compare', 'call flogmenu#compare()'],
-                           \ ['⌘  Bro&wse', 'call flog#run_command("GBrowse %(h)")'],
+                           \ ['☸  &Web browser', 'call flog#run_command("GBrowse %(h)")'],
                            \ ]
   let l:branches = len(g:flogmenu_normalmode_cursorinfo.local_branches) + len(g:flogmenu_normalmode_cursorinfo.remote_branches)
   if l:branches > 0
@@ -554,7 +561,7 @@ fu! flogmenu#set_signify_target(target_commit) abort
 endfunction
 
 fu! flogmenu#set_signify_custom() abort
-  let l:input = input('> ')
+  let l:input = flogmenu#input('> ')
   execute 'redraw'
   call flogmenu#set_signify_target(l:input)
 endfunction
