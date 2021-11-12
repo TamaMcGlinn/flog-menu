@@ -45,7 +45,7 @@ fu! flogmenu#git_worktree_command(command) abort
   " still works if you have a bare repo with several worktrees checked out
   let l:worktree_dir = systemlist('cd ' . expand('%:p:h') . ' && git rev-parse --show-toplevel')[0]
   " Get the modified files in a list
-  let l:full_command = fugitive#repo().git_command() . ' --work-tree ' . l:worktree_dir . ' ' . a:command
+  let l:full_command = FugitiveShellCommand() . ' --work-tree ' . l:worktree_dir . ' ' . a:command
   let l:output = systemlist(l:full_command)
   if v:shell_error
     throw 'git ' . a:command . ' failed with: ' . l:output

@@ -1,6 +1,6 @@
 # Vim Flog Menu
 
-Flogmenu adds a context menu for the selected commit on the log graph,
+Flog-menu adds a context menu for the selected commit on the log graph,
 similar to right-clicking in git GUI's:
 
 ![screenshot including the context-menu opened on the git graph](https://i.imgur.com/RlCGLk8.png)
@@ -11,11 +11,7 @@ can activate to open git-related plugins with custom options.
 
 ![screenshot of git leader-mapper menu](https://i.imgur.com/V7Zse7g.png)
 
-This plugin is an early work in progress.
-
-✔️  Help welcome
-
-❌ Not production-ready
+## The idea
 
 You shouldn't have to remember the keybindings for git operations,
 especially for those you seldom use.
@@ -23,14 +19,14 @@ Nor should you sacrifice screen space to controls as in mouse-based GUI's.
 
 Like [tig](https://github.com/jonas/tig), [vim-flog](http://github.com/rbong/vim-flog/)
 shows the git log graph fullscreen, and allows you to interact with that. 
-However, where tig and flog "leave configuration to the user", flogmenu
+However, where tig and flog "leave configuration to the user", flog-menu
 aims to be pre-configured and comprehensive in showing all *sensible* options
 (e.g. only showing `git push --force-with-lease`, not `git push --force`).
 
 ## Easy to learn, easy to master
 
-Vim flogmenu should be so easy to use, that even a yucky non-vim-user could
-use this as a replacement for commandline git. Flogmenu makes features from
+Vim flog-menu should be so easy to use, that even a yucky non-vim-user could
+use this as a replacement for commandline git. Flog-menu makes features from
 git plugins such as vim-fugitive and vim-flog easy to find and unnecessary to
 remember, by putting them in chained menus with textual descriptions just like
 in fully fledged git editors like GitExtensions, SourceTree, SmartGit etc.
@@ -45,6 +41,12 @@ workflow, without using the visual menus, if you prefer the traditional
 you could copy the 10 lines of config that define it, and change them around to
 suit your config. However, if your change is useful for everyone, I'd prefer you
 submit a merge request.
+
+### disclaimer!
+
+This plugin is work in progress. I have been using it for all git operations since the summer of 2021,
+so I expect to have ironed out the bugs in my own most heavily used paths, but it is not fully tested.
+Use at your own risk.
 
 ## Roadmap
 
@@ -63,7 +65,7 @@ Context menu:
 - ✔️  rebase
 - ✔️  reset mixed / hard
 - ❌ use soft instead of mixed in bare repo's
-- ❌ fixup/amend a commit
+- ✔️  fixup/amend a commit
 - ❌ create (partial) bundles for sneakernet transfer
 
 ## Installation
@@ -76,7 +78,13 @@ You need to install:
 - [fzf-checkout](https://github.com/stsewd/fzf-checkout.vim)
 - [leader-mapper](https://github.com/dpretet/vim-leader-mapper) (optional)
 - [quickui](https://github.com/skywind3000/vim-quickui)
-- [flogmenu](https://github.com/TamaMcGlinn/vim-flogmenu)
+- [flog-menu](https://github.com/TamaMcGlinn/vim-flogmenu)
+
+I also recommend these other extensions to vim-flog:
+
+- [flog-teamjump](https://github.com/TamaMcGlinn/flog-teamjump)
+- [flog-forest](https://github.com/TamaMcGlinn/flog-forest)
+- [flog-navigate](https://github.com/TamaMcGlinn/flog-navigate)
 
 Of course, you are recommended to use a plugin manager, for instance:
 
@@ -88,32 +96,12 @@ Plug 'rbong/vim-flog'
 Plug 'sodapopcan/vim-twiggy'
 Plug 'stsewd/fzf-checkout.vim'
 Plug 'dpretet/vim-leader-mapper'
-Plug 'skywind3000/vim-quickui'
-Plug 'TamaMcGlinn/vim-flogmenu'
-```
+Plug 'TamaMcGlinn/flog-menu'
 
-Using [dein](https://github.com/Shougo/dein.vim):
-
-```vim
-call dein#add('tpope/vim-fugitive')
-call dein#add('rbong/vim-flog')
-call dein#add('sodapopcan/vim-twiggy')
-call dein#add('stsewd/fzf-checkout')
-call dein#add('dpretet/vim-leader-mapper')
-call dein#add('skywind3000/vim-quickui')
-call dein#add('TamaMcGlinn/vim-flogmenu')
-```
-
-Using [vundle](https://github.com/gmarik/Vundle.vim):
-
-```vim
-Plugin 'tpope/vim-fugitive'
-Plugin 'rbong/vim-flog'
-Plugin 'sodapopcan/vim-twiggy'
-Plugin 'stsewd/fzf-checkout'
-Plugin 'dpretet/vim-leader-mapper'
-Plugin 'skywind3000/vim-quickui'
-Plugin 'TamaMcGlinn/vim-flogmenu'
+" recommended other extensions (optional)
+Plug 'TamaMcGlinn/flog-teamjump'
+Plug 'TamaMcGlinn/flog-forest'
+Plug 'TamaMcGlinn/flog-navigate'
 ```
 
 If you need to modify some of these, check the repository out
