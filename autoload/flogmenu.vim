@@ -549,7 +549,7 @@ endfunction
 fu! flogmenu#open_all_windows() abort
   call flogmenu#open_git_log()
   execute ':Twiggy'
-  execute ':Gstatus'
+  execute ':Git'
 endfunction
 
 " Signify other commits:

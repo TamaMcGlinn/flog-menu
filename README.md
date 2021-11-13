@@ -42,7 +42,7 @@ you could copy the 10 lines of config that define it, and change them around to
 suit your config. However, if your change is useful for everyone, I'd prefer you
 submit a merge request.
 
-### disclaimer!
+### Disclaimer
 
 This plugin is work in progress. I have been using it for all git operations since the summer of 2021,
 so I expect to have ironed out the bugs in my own most heavily used paths, but it is not fully tested.
@@ -74,8 +74,6 @@ You need to install:
 
 - [fugitive](https://github.com/tpope/vim-fugitive)
 - [flog](https://github.com/rbong/vim-flog)
-- [twiggy](https://github.com/sodapopcan/vim-twiggy)
-- [fzf-checkout](https://github.com/stsewd/fzf-checkout.vim)
 - [quickui](https://github.com/skywind3000/vim-quickui)
 - [flog-menu](https://github.com/TamaMcGlinn/vim-flogmenu)
 
@@ -85,6 +83,12 @@ I also recommend these other extensions to vim-flog:
 - [flog-forest](https://github.com/TamaMcGlinn/flog-forest)
 - [flog-navigate](https://github.com/TamaMcGlinn/flog-navigate)
 
+If installed, flog-menu integrates with these to provide additional functionality:
+
+- [vim-signify](https://github.com/mhinz/vim-signify)
+- [twiggy](https://github.com/sodapopcan/vim-twiggy)
+- [fzf-checkout](https://github.com/stsewd/fzf-checkout.vim)
+
 Of course, you are recommended to use a plugin manager, for instance:
 
 Using [vim-plug](https://github.com/junegunn/vim-plug):
@@ -93,38 +97,36 @@ Using [vim-plug](https://github.com/junegunn/vim-plug):
 Plug 'tpope/vim-fugitive'
 Plug 'rbong/vim-flog'
 Plug 'skywind3000/vim-quickui'
-Plug 'sodapopcan/vim-twiggy'
-Plug 'stsewd/fzf-checkout.vim'
 Plug 'TamaMcGlinn/flog-menu'
 
 " recommended other extensions (optional)
 Plug 'TamaMcGlinn/flog-teamjump'
 Plug 'TamaMcGlinn/flog-forest'
 Plug 'TamaMcGlinn/flog-navigate'
+
+" additional (optional) functionality
+Plug 'mhinz/vim-signify'
+Plug 'sodapopcan/vim-twiggy'
+Plug 'stsewd/fzf-checkout.vim'
 ```
-
-If you need to modify some of these, check the repository out
-somewhere, and add that directory as a plugin. For example:
-
-```vim
-Plug '~/code/vimplugins/vim-flogmenu'
-```
-
-When you modify such code, you will need to
-`source %` to make the changes take effect.
-
-##### sidenote:
-
-You may notice that the git log looks quite different in the screenshot
-from default vim-flog. When
-[this issue](https://github.com/rbong/vim-flog/issues/49) is resolved,
-instructions will appear below to optionally switch to this behaviour.
 
 ## Optional configuration
 
+### Bind to open function
+
+Bind whatever you find comfortable to opening flogmenu (in a new tab):
+
+```vim
+" open the full UI
+nnoremap <leader>ga :call flogmenu#open_all_windows()<CR>
+" open just the git log
+nnoremap <silent> <leader>gll :call flogmenu#open_git_log()<CR>
+```
+
 ### Context menu bindings
 
-Add this to your vimrc to bind `<leader>m` to open the contextmenu:
+Once in the flog git log graph, you will want to open the contextmenu.
+For instance, to use `<space>m` for that, use:
 
 ```vim
 " Set the leader to <space>
@@ -137,90 +139,66 @@ augroup flogmenu
   autocmd FileType floggraph nno <buffer> <Leader>m :<C-U>call flogmenu#open_main_contextmenu()<CR>
   autocmd FileType floggraph vno <buffer> <Leader>m :<C-U>call flogmenu#open_visual_contextmenu()<CR>
 augroup END
+```
 
+(TODO replace above with plug binding, which is apparently easier on users)
+
+### Set border style
+
+Highly recommended. The default is messy.
+
+```vim
 " Recommended: set the quickui border style
 let g:quickui_border_style = 2
 ```
 
-### Open git menu
+### Signify compare bindings
 
-If you just wanted the context menu on the git log, you don't 
-need leader-mapper installed, and you're done installing now.
+If you are using [vim-signify](https://github.com/mhinz/vim-signify) as well,
+flogmenu can integrate with that
+to allow you compare to a given commit using signify.
 
-Bind something to open the menu. Example given is `<Space>`:
+Open the commit log, browse to a commit and select `[C]ompare` from the contextmenu.
+The signify column will update to reflect changes compared to that commit.
+Use `:SignifyReset` to go back to the default signify behaviour, comparing to the
+last committed version (HEAD).
 
-```vim
-nnoremap <Space> <Nop>
-let mapleader = "\<Space>"
-
-nnoremap <silent> <leader> :LeaderMapper<CR>
-```
-
-Now pick one of the options below.
-
-##### sidenote:
-
-If you used something for LeaderMapper as above, that is a prefix
-of any of your existing mappings, there will be surprises. For example, if
-you have `<leader>l` bound to something, but `<leader>` alone opens a
-leader-mapper menu in which `l` is an option, then the leader-mapper option
-will be chosen when you press the keys slowly enough for the menu to pop up,
-but the pre-existing mapping will be picked if you press them faster. 
-To avoid this, you should either assign an unused `:LeaderMapper` mapping
-as you do for any new command you map, or migrate all of your bindings into
-leadermapper menu's.
-
-#### Option 1: Add git menu into existing menu-tree
-
-If you already use leader-mapper, you might want to fit the git menu into
-your existing config like this:
+Here is an example config, where the g square bracket bindings allow me to cycle
+deeper/shallower comparisons to HEAD, `gS` resets and `gp` is for "compare to parent".
 
 ```vim
-" Define the menu content with a Vim dictionary
-let g:leaderMenu = {'name':  'Main menu',
-             \'g': [g:flogmenu_gitmenu,  'Git'],
-             \'n': [myNavMenu,           'Navigate'],
-             \'q': [':tabc',       'Example direct command to close tab'],
-             \}
+nnoremap <leader>gS :SignifyReset<CR>
+nnoremap <leader>g[ :CompareOlder<CR>
+nnoremap <leader>g] :CompareNewer<CR>
+nnoremap <leader>gp :SignifyReset<CR>:SignifyOlder<CR>
 ```
 
-Note that the above has to go into `~/.vim/after/plugin/flogmenu_config.vim`
-(for Vim), or `~/.config/nvim/after/plugin/flogmenu_config.vim` (for NeoVim).
+### Additional direct bindings
 
-#### Option 2: Open git menu directly
-
-If you don't want to use leader-mapper for anything but the git menu, use:
+Some git features have no bearing
+on the git graph (or flogmenu, in fact).
+The context menu does not include anything for these
+but I recommend global bindings. For example:
 
 ```vim
-let g:leaderMenu = g:flogmenu_gitmenu
+" (force)push/fetch/pull
+nnoremap <leader>gj :Git fetch --all<CR>
+nnoremap <leader>gJ :call Track_and_pull()<CR>
+nnoremap <leader>gk :Git push<CR>
+nnoremap <leader>gK :Git push --force-with-lease<CR>
+
+" Stage this file
+nnoremap <leader>gg :Git add %<CR>
+
+" Same as `cc` from fugitive buffer
+nnoremap <leader>gc :Git commit<CR>
+
+" Reset this file to 
+nnoremap <leader>gR :Gread<CR>
+
+" When viewing some git version of file, switch to working copy of same file
+nnoremap <leader>ge :Gedit<CR>
+
+" Blame file
+nnoremap <leader>gz :Git blame<CR>
 ```
-
-Now whatever you mapped to :LeaderMapper will open the flogmenu defined git menu.
-
-Note that the above has to go into `~/.vim/after/plugin/flogmenu_config.vim`
-(for Vim), or `~/.config/nvim/after/plugin/flogmenu_config.vim` (for NeoVim).
-
-#### Option 3: Copy git menu and customize
-
-Even if you like the current flogmenu defined git menu, I might change it later
-for no apparent reason, and you will hate me because now your muscle memory is
-wrong. It's probably best to define the menu yourself. You can copy
-the menu's defined in [plugin/flogmenu.vim](plugin/flogmenu.vim) into your vimrc
-and then modify them:
-
-```vim
-let g:personal_logmenu = {'name': 'Flog Menu',
- \'l': [':Flog -all', 'Normal'],
- \}
-
-let g:personal_gitmenu = {'name': 'Git Menu',
-             \'s': [':Gstatus', 'Status'],
-             \'l': [g:personal_logmenu, 'Log'],
-             \}
-
-let g:leaderMenu = g:personal_gitmenu
-```
-
-This option is probably best, since it can just go straight in your vimrc file,
-and offers you a stable interface.
-
