@@ -5,12 +5,6 @@ similar to right-clicking in git GUI's:
 
 ![screenshot including the context-menu opened on the git graph](https://i.imgur.com/RlCGLk8.png)
 
-and a
-[leader-mapper](https://github.com/dpretet/vim-leader-mapper) menu you 
-can activate to open git-related plugins with custom options.
-
-![screenshot of git leader-mapper menu](https://i.imgur.com/V7Zse7g.png)
-
 ## The idea
 
 You shouldn't have to remember the keybindings for git operations,
