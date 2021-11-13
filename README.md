@@ -19,8 +19,8 @@ aims to be pre-configured and comprehensive in showing all *sensible* options
 
 ## Easy to learn, easy to master
 
-Vim flog-menu should be so easy to use, that even a yucky non-vim-user could
-use this as a replacement for commandline git. Flog-menu makes features from
+Vim flog-menu should be so easy to use, that even non-vim-users could
+use this as their git gui. Flog-menu makes features from
 git plugins such as vim-fugitive and vim-flog easy to find and unnecessary to
 remember, by putting them in chained menus with textual descriptions just like
 in fully fledged git editors like GitExtensions, SourceTree, SmartGit etc.
