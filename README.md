@@ -76,7 +76,6 @@ You need to install:
 - [flog](https://github.com/rbong/vim-flog)
 - [twiggy](https://github.com/sodapopcan/vim-twiggy)
 - [fzf-checkout](https://github.com/stsewd/fzf-checkout.vim)
-- [leader-mapper](https://github.com/dpretet/vim-leader-mapper) (optional)
 - [quickui](https://github.com/skywind3000/vim-quickui)
 - [flog-menu](https://github.com/TamaMcGlinn/vim-flogmenu)
 
@@ -93,9 +92,9 @@ Using [vim-plug](https://github.com/junegunn/vim-plug):
 ```vim
 Plug 'tpope/vim-fugitive'
 Plug 'rbong/vim-flog'
+Plug 'skywind3000/vim-quickui'
 Plug 'sodapopcan/vim-twiggy'
 Plug 'stsewd/fzf-checkout.vim'
-Plug 'dpretet/vim-leader-mapper'
 Plug 'TamaMcGlinn/flog-menu'
 
 " recommended other extensions (optional)
