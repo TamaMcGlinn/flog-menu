@@ -1,9 +1,9 @@
 # Vim Flog Menu
 
 Flog-menu adds a context menu for the selected commit on the log graph,
-similar to right-clicking in git GUI's:
+similar to right-clicking in mouse-based git GUI's:
 
-![screenshot including the context-menu opened on the git graph](https://i.imgur.com/RlCGLk8.png)
+![screenshot including the context-menu opened on the git graph](https://i.imgur.com/EvZDWMS.png)
 
 ## The idea
 
