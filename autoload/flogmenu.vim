@@ -546,9 +546,15 @@ fu! flogmenu#open_git_log() abort
   execute 'normal! zz'
 endfunction
 
+fu! flogmenu#open_twiggy() abort
+  if exists('g:loaded_twiggy')
+    execute ':Twiggy'
+  endif
+endfunction
+
 fu! flogmenu#open_all_windows() abort
   call flogmenu#open_git_log()
-  execute ':Twiggy'
+  call flogmenu#open_twiggy()
   execute ':Git'
 endfunction
 
