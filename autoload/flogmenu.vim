@@ -540,8 +540,8 @@ fu! flogmenu#search_visual_selection_fromcache() abort
   call fzf#run(fzf#wrap({'source': 'git grep --line-number -- '.shellescape('').' $(git rev-list '.l:oldest_commit.'^..'.l:youngest_commit.')', 'sink': function('flogmenu#open_git_ref_file')}), 0)
 endfunction
 
-fu! flogmenu#open_git_log() abort
-  execute ':Flog -all'
+fu! flogmenu#open_git_log(extra_params='') abort
+  execute ':Flog -all ' . a:extra_params
   execute ':Flogjump HEAD'
   execute 'normal! zz'
 endfunction
