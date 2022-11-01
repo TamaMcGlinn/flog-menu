@@ -181,7 +181,7 @@ endfunction
 " otherwise, returns a list of one-line commit summaries
 " for each commit
 "   which is in branch but is neither in commit, nor in origin/branch
-fu! flogmenu#get_changes_discarded_by_switching_and_moving_branch(branch, remote, commit) abort
+fu! flogmenu#get_changes_discarded_by_moving_branch(branch, remote, commit) abort
   " echo "Checking " . a:branch . " at remote " . a:remote . " compared to commit " . a:commit
   " Check if branch currently points at some ancestor of the target, which
   " means we're just updating the branch which is always fine
@@ -222,33 +222,50 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
       let l:remote = ''
     endif
   endif
+
+  let l:commit = g:flogmenu_normalmode_cursorinfo.selected_commit_hash
+
+  " define how to create_branch
   if a:switch_to_branch
-    let l:commit = g:flogmenu_normalmode_cursorinfo.selected_commit_hash
-    " if the branch doesn't exist yet we can proceed
-    call flogmenu#git_ignore_errors('rev-parse --quiet --verify ' . l:branch)
-    if v:shell_error
-      call flogmenu#force_checkout(l:branch, l:commit)
-    else
-      " check what is discarded if we move branch
-      let l:discarding_commits = flogmenu#get_changes_discarded_by_switching_and_moving_branch(l:branch, l:remote, l:commit)
-      if len(l:discarding_commits) > 0
-        echom l:branch . " contains changes that will be discarded by switching:"
-        for l:discarded_commit in l:discarding_commits
-          echom l:discarded_commit
-        endfor
-        let l:choice = flogmenu#input("> (a)bort / (d)iscard\n")
-        if l:choice ==# 'd'
-          call flogmenu#force_checkout(l:branch, l:commit)
-        else " All invalid input also means abort
-          return 1
-        endif
-      else
-        call flogmenu#force_checkout(l:branch, g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
-      endif
-    endif
+    let l:Create_branch = {-> flogmenu#force_checkout(l:branch, l:commit)}
   else
-    call flogmenu#git_then_update('branch ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)
+    let l:Create_branch = {-> flogmenu#git_then_update('branch ' . l:branch . ' ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)}
   endif
+
+  " define how to discard
+  if a:switch_to_branch
+    let l:Discard = {-> ';'} " no-op
+  else
+    let l:Discard = {-> flogmenu#git('branch -D ' . l:branch)}
+  endif
+
+  call flogmenu#git_ignore_errors('rev-parse --quiet --verify ' . l:branch)
+  if v:shell_error
+    " if the branch doesn't exist yet we can proceed
+    call l:Create_branch()
+  else
+    " check what is discarded if we move branch
+    let l:discarding_commits = flogmenu#get_changes_discarded_by_moving_branch(l:branch, l:remote, l:commit)
+    if len(l:discarding_commits) > 0
+      echom l:branch . " contains changes that will be discarded by switching:"
+      for l:discarded_commit in l:discarding_commits
+        echom l:discarded_commit
+      endfor
+      let l:choice = flogmenu#input("> (a)bort / (d)iscard\n")
+      if l:choice ==# 'd'
+        " if users chooses to discard, go ahead
+        call l:Discard()
+        call l:Create_branch()
+      else " All invalid input also means abort
+        return 1
+      endif
+    else
+      " if nothing would be discarded by moving, go ahead without prompt
+      call l:Discard()
+      call l:Create_branch()
+    endif
+  endif
+
   if l:track_remote
     let l:command = 'branch --set-upstream-to ' . l:remote . '/' . l:branch . ' ' . l:branch
     call flogmenu#git(l:command)
