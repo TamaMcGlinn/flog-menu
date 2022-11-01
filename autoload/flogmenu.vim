@@ -424,8 +424,22 @@ fu! flogmenu#delete_branch() abort
   call flogmenu#delete_branch_fromcache()
 endfunction
 
+fu! flogmenu#check_staged(staging_is_essential) abort
+  let l:staged_files = split(flogmenu#git('diff --staged --name-only'), '\n')
+  if len(l:staged_files) == 0
+    let l:unstaged_info = flogmenu#git('diff --stat')
+    let l:choice = flogmenu#input("Nothing staged!\nUnstaged changes: \n" . l:unstaged_info . "\nStage everything above? (y)es / (n)o ")
+    if l:choice ==# 'y'
+      call flogmenu#git('add .')
+    elseif a:staging_is_essential
+      throw "Nothing staged!"
+    endif
+  endif
+endfunction
+
 fu! flogmenu#fixup_fromcache() abort
-  execute 'Git commit -a --fixup=' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash
+  call flogmenu#check_staged(v:true)
+  execute 'Git commit --fixup=' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash
 endfunction
 
 fu! flogmenu#fixup() abort
@@ -563,6 +577,7 @@ fu! flogmenu#set_signify_target(target_commit) abort
   let g:flogmenu_signify_target_commit = a:target_commit
   let g:signify_vcs_cmds['git'] = 'git diff --no-color --no-ext-diff -U0 ' . a:target_commit . ' -- %f'
   let l:commit_summary = flogmenu#git_worktree_command('show --pretty="(%h) %s" --no-patch ' . a:target_commit)[0]
+  call sy#util#refresh_windows()
   echom 'Signify diffing against ' . a:target_commit . " " . l:commit_summary
 endfunction
 
