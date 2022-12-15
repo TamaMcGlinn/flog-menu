@@ -33,6 +33,12 @@ fu! flogmenu#git(command) abort
   return l:output
 endfunction
 
+fu! flogmenu#git_then_update_if_clean(command) abort
+  if flogmenu#ensure_git_status_is_clean()
+    call flogmenu#git_then_update(a:command)
+  endif
+endfunction
+
 fu! flogmenu#git_then_update(command) abort
   let git_output = flogmenu#git(a:command)
   call flog#populate_graph_buffer()
@@ -210,6 +216,12 @@ fu! flogmenu#get_changes_discarded_by_moving_branch(branch, remote, commit) abor
 endfunction
 
 fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_branch) abort
+  if a:switch_to_branch
+    if !flogmenu#ensure_git_status_is_clean()
+      return
+    endif
+  endif
+
   let l:branch = a:branchname
   let l:track_remote = v:false
   let l:remote = ''
@@ -327,18 +339,26 @@ fu! flogmenu#checkout() abort
   call flogmenu#checkout_fromcache()
 endfunction
 
-fu! flogmenu#checkout_fromcache() abort
+" Check if git status is clean; if so, return true
+" if not, ask the user if they want to discard or stash those changes,
+" if so, do it and return true.
+" If not, the user chose to abort and this returns false
+fu! flogmenu#ensure_git_status_is_clean() abort
   " Are we moving to a different commit? If so, check the git status is clean
   if g:flogmenu_normalmode_cursorinfo.different_commit
     if flogmenu#handle_unstaged_changes() == 1
-      return
+      return v:false
     endif
   endif
+  return v:true
+endfunction
+
+fu! flogmenu#checkout_fromcache() abort
   let l:branch_menu = []
   " If there are other local branches, these are the most likely choices
   " so they come first
   for l:local_branch in g:flogmenu_normalmode_cursorinfo.other_local_branches
-    call add(l:branch_menu, [l:local_branch, 'call flogmenu#git_then_update("checkout ' . l:local_branch . '")'])
+    call add(l:branch_menu, [l:local_branch, 'call flogmenu#git_then_update_if_clean("checkout ' . l:local_branch . '")'])
   endfor
   " Next, offer the choices to create branches for unmatched remote branches
   for l:unmatched_branch in g:flogmenu_normalmode_cursorinfo.unmatched_remote_branches
@@ -347,7 +367,7 @@ fu! flogmenu#checkout_fromcache() abort
   endfor
   " Finally, choices to make new branch or none at all
   call add(l:branch_menu, ['-create branch', 'call flogmenu#create_branch_menu_fromcache()'])
-  call add(l:branch_menu, ['-detached HEAD', 'call flogmenu#git_then_update("checkout " . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)'])
+  call add(l:branch_menu, ['-detached HEAD', 'call flogmenu#git_then_update_if_clean("checkout " . g:flogmenu_normalmode_cursorinfo.selected_commit_hash)'])
   call flogmenu#open_menu(l:branch_menu)
 endfunction
 
