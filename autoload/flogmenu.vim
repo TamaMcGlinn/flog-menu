@@ -373,7 +373,9 @@ endfunction
 
 fu! flogmenu#rebase_fromcache() abort
   let l:target = g:flogmenu_normalmode_cursorinfo.selected_commit_hash
-  execute 'Git rebase ' . l:target . ' --interactive --autosquash'
+  if flogmenu#ensure_git_status_is_clean()
+    execute 'Git rebase ' . l:target . ' --interactive --autosquash'
+  endif
 endfunction
 
 fu! flogmenu#rebase() abort
