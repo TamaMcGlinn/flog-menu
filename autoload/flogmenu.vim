@@ -368,19 +368,19 @@ fu! flogmenu#rebase() abort
 endfunction
 
 fu! flogmenu#reset_hard() abort
-  call flog#Exec('Git reset --hard %h', 0, 0)
+  call flog#Exec('Git reset --hard ' . flog#Format('%h'), 0, 0, 1)
 endfunction
 
 fu! flogmenu#reset_mixed() abort
-  call flog#Exec('Git reset --mixed %h', 0, 0)
+  call flog#Exec('Git reset --mixed ' . flog#Format('%h'), 0, 0, 1)
 endfunction
 
 fu! flogmenu#cherrypick() abort
-  call flog#Exec('Git cherry-pick %h', 0, 0)
+  call flog#Exec('Git cherry-pick ' . flog#Format('%h'), 0, 0, 1)
 endfunction
 
 fu! flogmenu#revert() abort
-  call flog#Exec('Git revert %h', 0, 0)
+  call flog#Exec('Git revert ' . flog#Format('%h'), 0, 0, 1)
 endfunction
 
 fu! flogmenu#merge_fromcache() abort
