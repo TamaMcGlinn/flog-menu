@@ -19,13 +19,12 @@ fu! flogmenu#open_menu(menu) abort
 endfunction
 
 fu! flogmenu#git_ignore_errors(command) abort
-  let l:cmd = 'git ' . a:command
+  let l:cmd = flog#fugitive#GetGitCommand() . ' ' . a:command
   let l:out = system(l:cmd)
   return substitute(out, '\c\C\n$', '', '')
 endfunction
 
 fu! flogmenu#git(command) abort
-  " TODO make this work when the cwd is elsewhere
   let l:output = flogmenu#git_ignore_errors(a:command)
   if v:shell_error
     throw 'git ' . a:command . ' failed with: ' . l:output
