@@ -463,6 +463,10 @@ endfunction
 fu! flogmenu#fixup_fromcache() abort
   call flogmenu#check_staged(v:true)
   execute 'Git commit --fixup=' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash
+  let l:choice = flogmenu#input("Rebase now? (y)es / (n)o ")
+  if l:choice ==# 'y'
+    execute 'Floggit rebase --interactive --autosquash ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash . '^'
+  endif
 endfunction
 
 fu! flogmenu#fixup() abort
