@@ -541,7 +541,7 @@ fu! flogmenu#open_main_contextmenu() abort
                            \ ['-'],
                            \ ['ⅈ  &Stat', 'call flogmenu#stat_fromcache()'],
                            \ ['⇄  &Compare', 'call flogmenu#compare()'],
-                           \ ['☸  &Web browser', 'call flog#Exec("GBrowse %(h)")'],
+                           \ ['☸  &Web browser', 'call flog#Exec(flog#Format("GBrowse %(h)"))'],
                            \ ]
   let l:branches = len(g:flogmenu_normalmode_cursorinfo.local_branches) + len(g:flogmenu_normalmode_cursorinfo.remote_branches)
   if l:branches > 0
