@@ -368,19 +368,19 @@ fu! flogmenu#rebase() abort
 endfunction
 
 fu! flogmenu#reset_hard() abort
-  call flog#Exec('Git reset --hard ' . flog#Format('%h'), 0, 0, 1)
+  call flog#ExecTmp('Git reset --hard ' . flog#Format('%h'))
 endfunction
 
 fu! flogmenu#reset_mixed() abort
-  call flog#Exec('Git reset --mixed ' . flog#Format('%h'), 0, 0, 1)
+  call flog#ExecTmp('Git reset --mixed ' . flog#Format('%h'))
 endfunction
 
 fu! flogmenu#cherrypick() abort
-  call flog#Exec('Git cherry-pick ' . flog#Format('%h'), 0, 0, 1)
+  call flog#ExecTmp('Git cherry-pick ' . flog#Format('%h'))
 endfunction
 
 fu! flogmenu#revert() abort
-  call flog#Exec('Git revert ' . flog#Format('%h'), 0, 0, 1)
+  call flog#ExecTmp('Git revert ' . flog#Format('%h'))
 endfunction
 
 fu! flogmenu#merge_fromcache() abort
@@ -390,7 +390,7 @@ fu! flogmenu#merge_fromcache() abort
   endif
   let l:merge_choices = []
   for l:local_branch in g:flogmenu_normalmode_cursorinfo.other_local_branches + g:flogmenu_normalmode_cursorinfo.unmatched_remote_branches
-    call add(l:merge_choices, [l:local_branch, 'call flog#Exec("Git merge --no-ff ' . l:local_branch . '", 0, 0)'])
+    call add(l:merge_choices, [l:local_branch, 'call flog#Exec("Git merge --no-ff ' . l:local_branch . '")'])
   endfor
   if len(l:merge_choices) == 1
     execute l:merge_choices[0][1]
