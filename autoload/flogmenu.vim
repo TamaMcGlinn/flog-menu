@@ -19,13 +19,12 @@ fu! flogmenu#open_menu(menu) abort
 endfunction
 
 fu! flogmenu#git_ignore_errors(command) abort
-  let l:cmd = 'git ' . a:command
+  let l:cmd = flog#fugitive#GetGitCommand() . ' ' . a:command
   let l:out = system(l:cmd)
   return substitute(out, '\c\C\n$', '', '')
 endfunction
 
 fu! flogmenu#git(command) abort
-  " TODO make this work when the cwd is elsewhere
   let l:output = flogmenu#git_ignore_errors(a:command)
   if v:shell_error
     throw 'git ' . a:command . ' failed with: ' . l:output
@@ -41,7 +40,7 @@ endfunction
 
 fu! flogmenu#git_then_update(command) abort
   let git_output = flogmenu#git(a:command)
-  call flog#populate_graph_buffer()
+  call flog#floggraph#buf#Update()
   return l:git_output
 endfunction
 
@@ -60,38 +59,22 @@ fu! flogmenu#git_worktree_command(command) abort
 endfunction
 
 " Gets the references attached to the commit on the selected line
+" example input:
+" {'len': 1, 'hash': '5aa0068', 'col': 1, 'suffix_len': 0, 'subject': '• 2023-06-09 [5aa0068] {Tama McGlinn} (HEAD -> master, origin/master) fix git commands when outside cwd',
+"  'line': 1, 'refs': 'HEAD -> master, origin/master', 'format_col': 3, 'suffix': [], 'body': [], 'parents': ['2718301']}
 fu! flogmenu#get_flog_refs(commit) abort
   if type(a:commit) != v:t_dict
     throw g:flogmenu_commit_parse_error
   endif
 
-  " TODO replace until next marker with this after flog PR#48 is approved
-  " TODO fix the bug in this flog code; local branches named remote/anything
-  " are considered as remote branches on the remote
-  " let [l:local_branches, l:remote_branches, l:tags, l:special] = flog#parse_ref_name_list(a:commit)
-  let l:local_branches = []
-  let l:remote_branches = []
-  let l:special = []
-  let l:tags = []
-  if !empty(a:commit.ref_name_list)
-    let l:refs = a:commit.ref_name_list
-    let l:original_refs = split(a:commit.ref_names_unwrapped, ' \ze-> \|, \|\zetag: ')
-    let l:i = 0
-    while l:i < len(l:refs)
-      let l:ref = l:refs[l:i]
-      if l:ref =~# 'HEAD$\|^refs/'
-        call add(l:special, l:ref)
-      elseif l:original_refs[l:i] =~# '^tag: '
-        call add(l:tags, l:ref)
-      elseif flog#is_remote_ref(l:ref)
-        call add(l:remote_branches, l:ref)
-      else
-        call add(l:local_branches, l:ref)
-      endif
-      let l:i += 1
-    endwhile
-  endif
-  " end TODO replacement
+  let refs = flog#state#GetCommitRefs(a:commit)
+  " example of refs:
+  " [{'tag': 0, 'full': 'master', 'path': 'master', 'tail': 'master', 'remote': '', 'orig': 'HEAD', 'prefix': ''},
+  " {'tag': 0, 'full': 'origin/master', 'path': 'origin/master', 'tail': 'master', 'remote': 'origin', 'orig': '', 'prefix': ''}]
+  let l:local_branches = map(filter(copy(l:refs), 'v:val["remote"] == ""'), 'v:val.full')
+  let l:remote_branches = map(filter(copy(l:refs), 'v:val["remote"] != ""'), 'v:val.full')
+  let l:special = map(filter(copy(l:refs), 'v:val["orig"] != ""'), 'v:val.orig')
+  let l:tags = map(filter(copy(l:refs), 'v:val["tag"] == 1'), 'v:val.full')
 
   let l:unmatched_remote_branches = filter(copy(l:remote_branches), "index(l:local_branches, substitute(v:val, '^[^/]*/', '', '')) < 0")
   let l:current_branch = flogmenu#git('rev-parse --abbrev-ref HEAD')
@@ -117,7 +100,7 @@ fu! flogmenu#set_selection_info() abort
     let l:commit = instaflog#get_commit_at_line()
     let l:refs = flogmenu#get_instaflog_refs()
   elseif &filetype is# 'floggraph'
-    let l:commit = flog#get_commit_at_line()
+    let l:commit = flog#floggraph#commit#GetAtLine()
     let l:refs = flogmenu#get_flog_refs(l:commit)
   else
     throw 'Unsupported filetype ' . &filetype
@@ -125,7 +108,7 @@ fu! flogmenu#set_selection_info() abort
   let g:flogmenu_normalmode_cursorinfo = l:refs
   let g:flogmenu_normalmode_cursorinfo['selected_commit'] = l:commit
   let l:current_commit = flogmenu#git('rev-parse HEAD')
-  let l:full_commit_hash = flogmenu#git('rev-parse ' . l:commit.short_commit_hash)
+  let l:full_commit_hash = flogmenu#git('rev-parse ' . l:commit.hash)
   let g:flogmenu_normalmode_cursorinfo['selected_commit_hash'] = l:full_commit_hash
   let g:flogmenu_normalmode_cursorinfo['different_commit'] = l:current_commit != l:full_commit_hash
 endfunction
@@ -143,9 +126,10 @@ fu! flogmenu#get_instaflog_refs() abort
 endfunction
 
 fu! flogmenu#set_visual_selection_info() abort
-  let [l:first, l:second] = flog#get_commit_selection()
-  let g:flogmenu_visual_selection_info['first'] = fugitive#RevParse(l:first.short_commit_hash)
-  let g:flogmenu_visual_selection_info['second'] = fugitive#RevParse(l:second.short_commit_hash)
+  let l:first = flog#floggraph#commit#GetAtLine(line("'<"))
+  let l:second = flog#floggraph#commit#GetAtLine(line("'>"))
+  let g:flogmenu_visual_selection_info['first'] = fugitive#RevParse(l:first.hash)
+  let g:flogmenu_visual_selection_info['second'] = fugitive#RevParse(l:second.hash)
 endfunction
 
 fu! flogmenu#create_branch_menu() abort
@@ -282,7 +266,7 @@ fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_bran
     let l:command = 'branch --set-upstream-to ' . l:remote . '/' . l:branch . ' ' . l:branch
     call flogmenu#git(l:command)
   endif
-  call flog#populate_graph_buffer()
+  call flog#floggraph#buf#Update()
 endfunction
 
 fu! flogmenu#create_input_branch_fromcache() abort
@@ -384,19 +368,19 @@ fu! flogmenu#rebase() abort
 endfunction
 
 fu! flogmenu#reset_hard() abort
-  call flog#run_command('Git reset --hard %h', 0, 1)
+  call flog#ExecTmp('Git reset --hard ' . flog#Format('%h'))
 endfunction
 
 fu! flogmenu#reset_mixed() abort
-  call flog#run_command('Git reset --mixed %h', 0, 1)
+  call flog#ExecTmp('Git reset --mixed ' . flog#Format('%h'))
 endfunction
 
 fu! flogmenu#cherrypick() abort
-  call flog#run_command('Git cherry-pick %h', 0, 1)
+  call flog#ExecTmp('Git cherry-pick ' . flog#Format('%h'))
 endfunction
 
 fu! flogmenu#revert() abort
-  call flog#run_command('Git revert %h', 0, 1)
+  call flog#ExecTmp('Git revert ' . flog#Format('%h'))
 endfunction
 
 fu! flogmenu#merge_fromcache() abort
@@ -406,7 +390,7 @@ fu! flogmenu#merge_fromcache() abort
   endif
   let l:merge_choices = []
   for l:local_branch in g:flogmenu_normalmode_cursorinfo.other_local_branches + g:flogmenu_normalmode_cursorinfo.unmatched_remote_branches
-    call add(l:merge_choices, [l:local_branch, 'call flog#run_command("Git merge --no-ff ' . l:local_branch . '", 0, 1)'])
+    call add(l:merge_choices, [l:local_branch, 'call flog#Exec("Git merge --no-ff ' . l:local_branch . '")'])
   endfor
   if len(l:merge_choices) == 1
     execute l:merge_choices[0][1]
@@ -437,7 +421,7 @@ fu! flogmenu#delete_other_branch_fromcache(branch) abort
       call flogmenu#delete_remote_branch(l:remote_tracking_branch)
     endif
   endif
-  call flog#populate_graph_buffer()
+  call flog#floggraph#buf#Update()
 endfunction
 
 fu! flogmenu#delete_remote_branch(remote_branch) abort
@@ -479,6 +463,10 @@ endfunction
 fu! flogmenu#fixup_fromcache() abort
   call flogmenu#check_staged(v:true)
   execute 'Git commit --fixup=' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash
+  let l:choice = flogmenu#input("Rebase now? (y)es / (n)o ")
+  if l:choice ==# 'y'
+    execute 'Floggit rebase --interactive --autosquash ' . g:flogmenu_normalmode_cursorinfo.selected_commit_hash . '^'
+  endif
 endfunction
 
 fu! flogmenu#fixup() abort
@@ -553,7 +541,7 @@ fu! flogmenu#open_main_contextmenu() abort
                            \ ['-'],
                            \ ['ⅈ  &Stat', 'call flogmenu#stat_fromcache()'],
                            \ ['⇄  &Compare', 'call flogmenu#compare()'],
-                           \ ['☸  &Web browser', 'call flog#run_command("GBrowse %(h)")'],
+                           \ ['☸  &Web browser', 'call flog#Exec(flog#Format("GBrowse %(h)"))'],
                            \ ]
   let l:branches = len(g:flogmenu_normalmode_cursorinfo.local_branches) + len(g:flogmenu_normalmode_cursorinfo.remote_branches)
   if l:branches > 0
@@ -578,7 +566,7 @@ fu! flogmenu#jump_to_mergebase() abort
   let l:two = g:flogmenu_visual_selection_info['second']
   let l:mergebase = flogmenu#git('merge-base '.l:one.' '.l:two)
   echo l:mergebase
-  execute ':Flogjump '.l:mergebase
+  call flog#floggraph#nav#JumpToCommit(l:mergebase)
 endfunction
 
 fu! flogmenu#search_visual_selection_diffs_fromcache() abort
@@ -595,7 +583,7 @@ endfunction
 
 fu! flogmenu#open_git_log(extra_params='') abort
   execute ':Flog -all ' . a:extra_params
-  execute ':Flogjump HEAD'
+  call flog#floggraph#nav#JumpToCommit(systemlist(flog#fugitive#GetGitCommand() . " rev-parse HEAD")[0][0:6])
   execute 'normal! zz'
 endfunction
 
