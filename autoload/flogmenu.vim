@@ -181,7 +181,11 @@ fu! flogmenu#get_changes_discarded_by_moving_branch(branch, remote, commit) abor
     return []
   endif
 
-  let l:common_base = flogmenu#git('merge-base ' . a:commit . ' ' . a:branch)
+  let l:common_base = flogmenu#git_ignore_errors('merge-base ' . a:commit . ' ' . a:branch) . ".."
+  if v:shell_error
+    " there is no common commit, so all changes on that branch are at risk
+    let l:common_base = ""
+  endif
   " Check if the remote contains the changes, in which case
   " we are also not throwing away any changes
   if a:remote !=# ''
@@ -190,14 +194,20 @@ fu! flogmenu#get_changes_discarded_by_moving_branch(branch, remote, commit) abor
       return []
     endif
     let l:remote_branch_base = flogmenu#git('merge-base ' . a:remote . '/' . a:branch . ' ' . a:branch)
-    " Check if the remote-branch base contains all that is in
-    " the base between the commit and the branch, in which case we replace it
-    call flogmenu#git_ignore_errors('merge-base --is-ancestor ' . l:common_base . ' ' . l:remote_branch_base)
-    if !v:shell_error
-      let l:common_base = l:remote_branch_base
+    if l:common_base !=# ''
+      " Check if the remote-branch base contains all that is in
+      " the base between the commit and the branch, in which case we replace it
+      call flogmenu#git_ignore_errors('merge-base --is-ancestor ' . l:common_base . ' ' . l:remote_branch_base)
+      if !v:shell_error
+        " to correctly ignore the changes after the common base
+        " but before remote/branch branced off from branch, we
+        " set the common base to the common parent (base)
+        " of remote/branch and branch
+        let l:common_base = l:remote_branch_base
+      endif
     endif
   endif
-  return systemlist("git log --pretty=format:'%h %s' " . l:common_base . '..' . a:branch)
+  return systemlist("git log --pretty=format:'%h %s' " . l:common_base . a:branch)
 endfunction
 
 fu! flogmenu#create_given_branch_and_switch_fromcache(branchname, switch_to_branch) abort
