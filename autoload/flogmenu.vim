@@ -146,6 +146,7 @@ endfunction
 
 fu! flogmenu#create_given_branch_fromcache(branchname) abort
   let l:wants_to_switch = flogmenu#input('Switch to the branch? (y)es / (n)o ')
+  echom " "
   call flogmenu#create_given_branch_and_switch_fromcache(a:branchname, l:wants_to_switch ==# 'y')
 endfunction
 
